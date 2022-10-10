@@ -11,7 +11,7 @@ class Config
      */
     protected static array $configData = [];
 
-    protected static string $path = __DIR__ . '/../../config/queues.php';
+    protected static string $path = __DIR__ . '/../../../../config/ppq.php';
 
     public static function setPath(string $path): void
     {
