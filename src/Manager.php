@@ -24,7 +24,7 @@ class Manager
     public function __construct(
         private float $checkEveryXSeconds = 1.0,
     ) {
-        $this->checkEveryXSeconds = 0.01;
+        $this->checkEveryXSeconds = 0.1;
 
         $this->buildQueuesFromConfig();
 
@@ -45,6 +45,10 @@ class Manager
 
     public function workQueues(): void
     {
+        if ($this->queuesAreAlreadyWorking()) {
+            throw new Exception('Queues are already working');
+        }
+
         $nextCheck = microtime(true);
 
         while (true) { // @phpstan-ignore-line
@@ -221,6 +225,11 @@ class Manager
                 }
             }
         }
+    }
+
+    private function queuesAreAlreadyWorking(): bool
+    {
+        return Process::runningProcessContainingStringsExists(['php', 'vendor/bin/ppq', 'work']);
     }
 
     private function signal(): ?Signal
