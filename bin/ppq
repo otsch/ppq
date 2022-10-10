@@ -1,7 +1,13 @@
 #!/usr/bin/env php
 <?php
 
-include_once $_composer_autoload_path ?? __DIR__ . '/../vendor/autoload.php';
+$autoloadPath = $_composer_autoload_path ?? __DIR__ . '/../vendor/autoload.php';
+
+if (!file_exists($autoloadPath)) {
+    $autoloadPath = __DIR__ . '/../../vendor/autoload.php';
+}
+
+include_once $autoloadPath;
 
 use Otsch\Ppq\Kernel;
 use Otsch\Ppq\Loggers\EchoLogger;
