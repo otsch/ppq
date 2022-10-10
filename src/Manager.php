@@ -17,7 +17,7 @@ class Manager
 
     private bool $stopScheduled = false;
 
-    private ?Signal $signal;
+    private ?Signal $signal = null;
 
     private LoggerInterface $logger;
 
