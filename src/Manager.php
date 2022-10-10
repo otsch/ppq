@@ -31,16 +31,16 @@ class Manager
         $this->logger = new EchoLogger();
     }
 
-    public static function peueCommand(string $command): SymfonyProcess
+    public static function ppqCommand(string $command): SymfonyProcess
     {
-        $command = 'php ' . self::peuePath() . ' ' . $command;
+        $command = 'php ' . self::ppqPath() . ' ' . $command;
 
         return SymfonyProcess::fromShellCommandline($command);
     }
 
-    public static function peuePath(): string
+    public static function ppqPath(): string
     {
-        return __DIR__ . '/../../peue';
+        return __DIR__ . '/../bin/ppq';
     }
 
     public function workQueues(): void

@@ -34,7 +34,7 @@ class Queue
 
     public function startWaitingJob(QueueRecord $waitingJob): void
     {
-        $process = Manager::peueCommand('run-job ' . $waitingJob->id);
+        $process = Manager::ppqCommand('run-job ' . $waitingJob->id);
 
         $process->start();
 
