@@ -1,10 +1,15 @@
 {
-    "name": "crwlr/package-template",
-    "description": "Template repository for new crwlr packages.",
+    "name": "otsch/ppq",
+    "description": "A very simple PHP queue system to run background tasks.",
     "keywords": [
-        "crwlr"
+        "queue",
+        "queue system",
+        "background tasks",
+        "task runner",
+        "background task runner",
+        "file",
+        "filesystem"
     ],
-    "homepage": "https://www.crwlr.software/packages/...",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -15,17 +20,17 @@
         }
     ],
     "support": {
-        "issues": "https://github.com/crwlrsoft/.../issues",
-        "source": "https://github.com/crwlrsoft/...",
-        "docs": "https://www.crwlr.software/packages/..."
+        "issues": "https://github.com/otsch/ppq/issues",
+        "source": "https://github.com/otsch/ppq",
+        "docs": "https://github.com/otsch/ppq"
     },
     "autoload": {
         "psr-4": {
-            "Crwlr\\PackageTemplate\\": "src/"
+            "Otsch\\Ppq\\": "src/"
         }
     },
     "require": {
-        "php": "^8.0"
+        "php": "^8.1"
     },
     "require-dev": {
         "pestphp/pest": "^1.22",
