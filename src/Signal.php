@@ -19,7 +19,7 @@ class Signal
             throw new Exception('Signal doesn\'t work without a \'datapath\' in config.');
         }
 
-        $this->filePath = $filePath;
+        $this->filePath = $filePath . (!str_ends_with($filePath, '/') ? '/' : '') . 'signal';
 
         if (!file_exists($this->filePath)) {
             touch($this->filePath);
