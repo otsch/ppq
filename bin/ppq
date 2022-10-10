@@ -1,0 +1,11 @@
+#!/usr/bin/env php
+<?php
+
+use Otsch\Ppq\Kernel;
+use Otsch\Ppq\Loggers\EchoLogger;
+
+try {
+    (new Kernel($argv))->run();
+} catch (Exception $exception) {
+    (new EchoLogger())->error($exception->getMessage());
+}
