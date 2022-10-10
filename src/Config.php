@@ -2,6 +2,7 @@
 
 namespace Otsch\Ppq;
 
+use Exception;
 use Otsch\Ppq\Contracts\QueueDriver;
 
 class Config
@@ -20,7 +21,15 @@ class Config
 
     public static function getDriver(): QueueDriver
     {
-        return self::get('driver');
+        $driverClassName = self::get('driver');
+
+        $driver = new $driverClassName();
+
+        if (!$driver instanceof QueueDriver) {
+            throw new Exception('Configured driver is not an implementation of the QueueDriver interface.');
+        }
+
+        return $driver;
     }
 
     public static function get(string $key = ''): mixed

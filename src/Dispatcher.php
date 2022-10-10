@@ -25,7 +25,7 @@ class Dispatcher
 
     public static function queue(string $name): self
     {
-        return new self($name, Config::get('driver'));
+        return new self($name, Config::getDriver());
     }
 
     public function job(string $jobClassName): self
