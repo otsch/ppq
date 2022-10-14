@@ -22,10 +22,8 @@ class Manager
     private LoggerInterface $logger;
 
     public function __construct(
-        private float $checkEveryXSeconds = 1.0,
+        private float $checkEveryXSeconds = 0.5,
     ) {
-        $this->checkEveryXSeconds = 0.1;
-
         $this->buildQueuesFromConfig();
 
         $this->logger = new EchoLogger();
