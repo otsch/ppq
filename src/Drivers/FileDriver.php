@@ -31,13 +31,19 @@ class FileDriver implements QueueDriver
      */
     public function add(QueueRecord $queueRecord): void
     {
-        $queue = $this->getQueue($queueRecord->queue);
+        [$queueFileHandle, $indexFileHandle] = $this->openAndLockQueueAndIndexFiles($queueRecord->queue);
+
+        $queue = $this->getQueue($queueRecord->queue, $queueFileHandle);
 
         $queue[$queueRecord->id] = $queueRecord;
 
-        $this->saveQueue($queueRecord->queue, $queue);
+        $this->saveQueue($queue, $queueFileHandle);
 
-        $this->addIdToIndex($queueRecord);
+        $this->addIdToIndex($queueRecord, $indexFileHandle);
+
+        $this->releaseLockAndCloseHandle($queueFileHandle);
+
+        $this->releaseLockAndCloseHandle($indexFileHandle);
     }
 
     /**
@@ -45,11 +51,17 @@ class FileDriver implements QueueDriver
      */
     public function update(QueueRecord $queueRecord): void
     {
-        $queue = $this->getQueue($queueRecord->queue);
+        $queueFileHandle = $this->openAndLockQueueFile($queueRecord->queue);
 
-        $queue[$queueRecord->id] = $queueRecord;
+        $queue = $this->getQueue($queueRecord->queue, $queueFileHandle);
 
-        $this->saveQueue($queueRecord->queue, $queue);
+        if (isset($queue[$queueRecord->id])) {
+            $queue[$queueRecord->id] = $queueRecord;
+        }
+
+        $this->saveQueue($queue, $queueFileHandle);
+
+        $this->releaseLockAndCloseHandle($queueFileHandle);
     }
 
     /**
@@ -68,19 +80,32 @@ class FileDriver implements QueueDriver
         return $queue[$id] ?? null;
     }
 
+    /**
+     * @throws Exception
+     */
     public function forget(string $id): void
     {
-        $index = $this->getIndex();
+        $indexFileHandle = $this->openAndLockIndexFile();
+
+        $index = $this->getIndex($indexFileHandle);
 
         if (!isset($index[$id])) {
             return;
         }
 
-        $this->forgetFromQueue($index[$id], $id);
+        $queue = $index[$id];
+
+        $queueFileHandle = $this->openAndLockQueueFile($queue);
+
+        $this->forgetFromQueue($queue, $id, $queueFileHandle, );
 
         unset($index[$id]);
 
-        $this->saveIndex($index);
+        $this->saveIndex($index, $indexFileHandle);
+
+        $this->releaseLockAndCloseHandle($queueFileHandle);
+
+        $this->releaseLockAndCloseHandle($indexFileHandle);
     }
 
     /**
@@ -109,23 +134,26 @@ class FileDriver implements QueueDriver
     }
 
     /**
-     * @param string $queue
      * @return array<string, QueueRecord>
      * @throws Exception
      */
-    protected function getQueue(string $queue): array
+    protected function getQueue(string $queue, mixed $handle = null): array
     {
-        if (!file_exists($this->basePath('queue-' . $queue))) {
-            touch($this->basePath('queue-' . $queue));
+        if (!file_exists($this->queueFileName($queue))) {
+            touch($this->queueFileName($queue));
 
-            $this->saveQueue($queue, []);
+            $handle = $handle ?? $this->openAndLockQueueFile($queue);
+
+            $this->saveQueue([], $handle);
+
+            $this->releaseLockAndCloseHandle($handle);
 
             return [];
         }
 
         $queueJobs = [];
 
-        foreach ($this->getUnserializedQueueContent($queue) as $id => $queueJobData) {
+        foreach ($this->getUnserializedQueueContent($queue, $handle) as $id => $queueJobData) {
             $queueJobs[$id] = QueueRecord::fromArray($queueJobData);
         }
 
@@ -135,7 +163,7 @@ class FileDriver implements QueueDriver
     /**
      * @param QueueRecord[] $queueData
      */
-    protected function saveQueue(string $queue, array $queueData): void
+    protected function saveQueue(array $queueData, mixed $handle): void
     {
         foreach ($queueData as $queueJobId => $queueJob) {
             if ($queueJob instanceof QueueRecord) {
@@ -143,67 +171,96 @@ class FileDriver implements QueueDriver
             }
         }
 
-        file_put_contents($this->basePath('queue-' . $queue), serialize($queueData));
+        fwrite($handle, serialize($queueData));
     }
 
     /**
      * @throws Exception
      */
-    protected function forgetFromQueue(string $queue, string $id): void
+    protected function forgetFromQueue(string $queue, string $id, mixed $queueHandle): void
     {
-        $queueData = $this->getQueue($queue);
+        $queueData = $this->getQueue($queue, $queueHandle);
 
         if (isset($queueData[$id])) {
             unset($queueData[$id]);
         }
 
-        $this->saveQueue($queue, $queueData);
+        $this->saveQueue($queueData, $queueHandle);
     }
 
-    protected function addIdToIndex(QueueRecord $record): void
+    /**
+     * @throws Exception
+     */
+    protected function addIdToIndex(QueueRecord $record, mixed $handle): void
     {
-        $index = $this->getIndex();
+        $index = $this->getIndex($handle);
 
         $index[$record->id] = $record->queue;
 
-        $this->saveIndex($index);
+        $this->saveIndex($index, $handle);
     }
 
     /**
      * @return array<string, string>
      * @throws Exception
      */
-    protected function getIndex(): array
+    protected function getIndex(mixed $handle = null): array
     {
         if (!file_exists($this->basePath('index'))) {
             touch($this->basePath('index'));
 
-            $this->saveIndex([]);
+            $handle = $handle ?? $this->openAndLockIndexFile();
+
+            $this->saveIndex([], $handle);
+
+            $this->releaseLockAndCloseHandle($handle);
         }
 
-        return $this->getUnserializedFileContent($this->basePath('index'));
+        return $this->getUnserializedFileContent($this->basePath('index'), $handle);
     }
 
     /**
      * @return mixed[]
      * @throws Exception
      */
-    protected function getUnserializedQueueContent(string $queue): array
+    protected function getUnserializedQueueContent(string $queue, mixed $handle = null): array
     {
-        return $this->getUnserializedFileContent($this->basePath('queue-' . $queue));
+        return $this->getUnserializedFileContent($this->queueFileName($queue), $handle);
     }
 
     /**
-     * There can be problems when read and write happen exactly at the same time. In this case it can happen that
-     * unserialize fails, because the file is currently being written. Just wait a little and try again.
+     * When this method is called within the process of writing data, it will receive an open file handle as second
+     * argument. In this case the data is read using fgets(). Otherwise, it will just use file_get_contents().
+     *
+     * When there is no open file handle, it could be that some other process has currently locked the file, which
+     * could cause file_get_contents() to fail. In that case, just wait a little and try again or throw an exception
+     * if it can't read the file
      *
      * @throws Exception
      */
-    protected function getUnserializedFileContent(string $filepath): mixed
+    protected function getUnserializedFileContent(string $filepath, mixed $handle = null): mixed
     {
+        if (is_resource($handle)) {
+            $content = '';
+
+            while (($buffer = fgets($handle)) !== false) {
+                $content .= $buffer;
+            }
+
+            rewind($handle);
+
+            $content = @unserialize($content);
+
+            if ($content !== false) {
+                return $content;
+            }
+
+            throw new Exception('Failed to read or unserialize file');
+        }
+
         $tries = 0;
 
-        while ($tries < 100) {
+        while ($tries < 1000) {
             $fileContent = file_get_contents($filepath);
 
             if ($fileContent !== false) {
@@ -224,10 +281,100 @@ class FileDriver implements QueueDriver
 
     /**
      * @param array<string, string> $index
+     * @param resource $handle
      */
-    protected function saveIndex(array $index): void
+    protected function saveIndex(array $index, mixed $handle): void
     {
-        file_put_contents($this->basePath('index'), serialize($index));
+        fwrite($handle, serialize($index));
+    }
+
+    /**
+     * @return array<int, resource>
+     * @throws Exception
+     */
+    protected function openAndLockQueueAndIndexFiles(string $queue): array
+    {
+        $waitTime = null;
+
+        while ($waitTime < 100000) {
+            try {
+                return [$this->openAndLockQueueFile($queue, false), $this->openAndLockIndexFile(false)];
+            } catch (Exception $exception) {
+            }
+
+            $waitTime = $waitTime === null ? rand(100, 300) : $waitTime + rand(100, 300);
+
+            usleep($waitTime);
+        }
+
+        throw new Exception('Can\'t open or lock file.');
+    }
+
+    /**
+     * @return resource
+     * @throws Exception
+     */
+    protected function openAndLockQueueFile(string $queue, bool $retry = true): mixed
+    {
+        return $this->openAndLockFile($this->queueFileName($queue), $retry);
+    }
+
+    /**
+     * @return resource
+     * @throws Exception
+     */
+    protected function openAndLockIndexFile(bool $retry = true): mixed
+    {
+        return $this->openAndLockFile($this->indexFileName(), $retry);
+    }
+
+    protected function openAndLockFile(string $filepath, bool $retry = true): mixed
+    {
+        $waitTime = null;
+
+        while ($waitTime === null || $waitTime < 50000) {
+            $fileHandle = fopen($filepath, 'r+');
+
+            if ($fileHandle) {
+                if (flock($fileHandle, LOCK_EX | LOCK_NB)) {
+                    return $fileHandle;
+                }
+
+                fclose($fileHandle);
+            }
+
+            if (!$retry) {
+                throw new Exception('Can\'t open or lock file');
+            }
+
+            $waitTime = $waitTime === null ? rand(100, 300) : $waitTime + rand(100, 300);
+
+            usleep($waitTime);
+        }
+
+        throw new Exception('Can\'t open or lock file.');
+    }
+
+    protected function releaseLockAndCloseHandle(mixed $handle): void
+    {
+        flock($handle, LOCK_UN);
+
+        fclose($handle);
+    }
+
+    protected function queueFileName(string $queue): string
+    {
+        return $this->basePath('queue-' . $queue);
+    }
+
+    protected function indexFileName(): string
+    {
+        return $this->basePath('index');
+    }
+
+    protected function basePath(string $fileName): string
+    {
+        return $this->basePath . (!str_ends_with($this->basePath, '/') ? '/' : '') . $fileName;
     }
 
     /**
@@ -271,10 +418,5 @@ class FileDriver implements QueueDriver
         }
 
         return true;
-    }
-
-    protected function basePath(string $fileName): string
-    {
-        return $this->basePath . (!str_ends_with($this->basePath, '/') ? '/' : '') . $fileName;
     }
 }
