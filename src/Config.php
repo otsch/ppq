@@ -4,6 +4,7 @@ namespace Otsch\Ppq;
 
 use Exception;
 use Otsch\Ppq\Contracts\QueueDriver;
+use Otsch\Ppq\Drivers\FileDriver;
 
 class Config
 {
@@ -21,7 +22,7 @@ class Config
 
     public static function getDriver(): QueueDriver
     {
-        $driverClassName = self::get('driver');
+        $driverClassName = self::get('driver') ?? FileDriver::class;
 
         $driver = new $driverClassName();
 
