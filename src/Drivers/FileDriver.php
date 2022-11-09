@@ -140,13 +140,7 @@ class FileDriver implements QueueDriver
     protected function getQueue(string $queue, mixed $handle = null): array
     {
         if (!file_exists($this->queueFileName($queue))) {
-            touch($this->queueFileName($queue));
-
-            $handle = $handle ?? $this->openAndLockQueueFile($queue);
-
-            $this->saveQueue([], $handle);
-
-            $this->releaseLockAndCloseHandle($handle);
+            $this->initQueueFile($queue);
 
             return [];
         }
@@ -316,6 +310,10 @@ class FileDriver implements QueueDriver
      */
     protected function openAndLockQueueFile(string $queue, bool $retry = true): mixed
     {
+        if (!file_exists($this->queueFileName($queue))) {
+            $this->initQueueFile($queue);
+        }
+
         return $this->openAndLockFile($this->queueFileName($queue), $retry);
     }
 
@@ -360,6 +358,20 @@ class FileDriver implements QueueDriver
         flock($handle, LOCK_UN);
 
         fclose($handle);
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function initQueueFile(string $queue): void
+    {
+        touch($this->queueFileName($queue));
+
+        $handle = $this->openAndLockQueueFile($queue);
+
+        $this->saveQueue([], $handle);
+
+        $this->releaseLockAndCloseHandle($handle);
     }
 
     protected function queueFileName(string $queue): string
