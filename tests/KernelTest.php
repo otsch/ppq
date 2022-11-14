@@ -1,7 +1,5 @@
 <?php
 
-namespace tests;
-
 use Otsch\Ppq\Kernel;
 
 it('is instantiable', function () {

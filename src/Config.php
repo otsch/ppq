@@ -2,9 +2,9 @@
 
 namespace Otsch\Ppq;
 
-use Exception;
 use Otsch\Ppq\Contracts\QueueDriver;
 use Otsch\Ppq\Drivers\FileDriver;
+use Otsch\Ppq\Exceptions\InvalidQueueDriverException;
 
 class Config
 {
@@ -20,6 +20,9 @@ class Config
         self::$path = $path;
     }
 
+    /**
+     * @throws InvalidQueueDriverException
+     */
     public static function getDriver(): QueueDriver
     {
         $driverClassName = self::get('driver') ?? FileDriver::class;
@@ -27,7 +30,9 @@ class Config
         $driver = new $driverClassName();
 
         if (!$driver instanceof QueueDriver) {
-            throw new Exception('Configured driver is not an implementation of the QueueDriver interface.');
+            throw new InvalidQueueDriverException(
+                'Configured driver must be an implementation of the QueueDriver interface.'
+            );
         }
 
         return $driver;
