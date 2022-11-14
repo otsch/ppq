@@ -1,9 +1,9 @@
 <?php
 
-use Stubs\CustomDriver;
+use Stubs\SimpleInMemoryDriver;
 
 return [
     'datapath' => __DIR__ . '/../datapath',
 
-    'driver' => CustomDriver::class,
+    'driver' => SimpleInMemoryDriver::class,
 ];

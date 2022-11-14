@@ -3,8 +3,8 @@
 use Otsch\Ppq\Config;
 use Otsch\Ppq\Drivers\FileDriver;
 use Otsch\Ppq\Exceptions\InvalidQueueDriverException;
-use Stubs\CustomDriver;
 use Stubs\Scheduler;
+use Stubs\SimpleInMemoryDriver;
 
 function helper_configFilePath(string $configFile = 'min.php'): string
 {
@@ -33,7 +33,7 @@ test('the driver method returns a FileDriver if no other driver ist configured',
 it('returns an instance of the driver you configure', function () {
     Config::setPath(helper_configFilePath('custom-driver.php'));
 
-    expect(Config::getDriver())->toBeInstanceOf(CustomDriver::class);
+    expect(Config::getDriver())->toBeInstanceOf(SimpleInMemoryDriver::class);
 });
 
 it('throws an Exception when the configured driver does not implement the QueueDriver interface', function () {
