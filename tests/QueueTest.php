@@ -6,7 +6,9 @@ use Otsch\Ppq\Entities\Values\QueueJobStatus;
 use Otsch\Ppq\Queue;
 use Stubs\TestJob;
 
-beforeAll(function () {
+beforeEach(function () {
+    Config::setPath(__DIR__ . '/_testdata/config/filesystem-ppq.php');
+
     if (!file_exists(__DIR__ . '/_testdata/datapath/index')) {
         touch(__DIR__ . '/_testdata/datapath/index');
     }
@@ -18,10 +20,6 @@ beforeAll(function () {
     }
 
     file_put_contents(__DIR__ . '/_testdata/datapath/queue-default', 'a:0:{}');
-});
-
-beforeEach(function () {
-    Config::setPath(__DIR__ . '/_testdata/config/filesystem-ppq.php');
 });
 
 function helper_addQueueJob(string $queue = 'default'): QueueRecord
