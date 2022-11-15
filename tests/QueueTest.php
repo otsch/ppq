@@ -6,6 +6,20 @@ use Otsch\Ppq\Entities\Values\QueueJobStatus;
 use Otsch\Ppq\Queue;
 use Stubs\TestJob;
 
+beforeAll(function () {
+    if (!file_exists(__DIR__ . '/_testdata/datapath/index')) {
+        touch(__DIR__ . '/_testdata/datapath/index');
+    }
+
+    file_put_contents(__DIR__ . '/_testdata/datapath/index', 'a:0:{}');
+
+    if (!file_exists(__DIR__ . '/_testdata/datapath/queue-default')) {
+        touch(__DIR__ . '/_testdata/datapath/queue-default');
+    }
+
+    file_put_contents(__DIR__ . '/_testdata/datapath/queue-default', 'a:0:{}');
+});
+
 beforeEach(function () {
     Config::setPath(__DIR__ . '/_testdata/config/filesystem-ppq.php');
 });

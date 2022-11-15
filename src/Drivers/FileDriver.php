@@ -173,14 +173,8 @@ class FileDriver extends AbstractQueueDriver
      */
     protected function getIndex(mixed $handle = null): array
     {
-        if (!file_exists($this->basePath('index'))) {
-            touch($this->basePath('index'));
-
-            $handle = $handle ?? $this->openAndLockIndexFile();
-
-            $this->saveIndex([], $handle);
-
-            $this->releaseLockAndCloseHandle($handle);
+        if (!file_exists($this->indexFileName())) {
+            $this->initIndexFile();
         }
 
         return $this->getUnserializedFileContent($this->basePath('index'), $handle);
@@ -296,6 +290,10 @@ class FileDriver extends AbstractQueueDriver
      */
     protected function openAndLockIndexFile(bool $retry = true): mixed
     {
+        if (!file_exists($this->indexFileName())) {
+            $this->initIndexFile();
+        }
+
         return $this->openAndLockFile($this->indexFileName(), $retry);
     }
 
@@ -343,6 +341,20 @@ class FileDriver extends AbstractQueueDriver
         $handle = $this->openAndLockQueueFile($queue);
 
         $this->saveQueue([], $handle);
+
+        $this->releaseLockAndCloseHandle($handle);
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function initIndexFile(): void
+    {
+        touch($this->indexFileName());
+
+        $handle = $this->openAndLockIndexFile();
+
+        $this->saveIndex([], $handle);
 
         $this->releaseLockAndCloseHandle($handle);
     }
