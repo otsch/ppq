@@ -48,4 +48,15 @@ class Argv
     {
         return $this->argv[2] ?? null;
     }
+
+    public function configPath(): ?string
+    {
+        $lastArg = end($this->argv);
+
+        if (!empty($lastArg) && str_starts_with($lastArg, '--c=')) {
+            return substr($lastArg, 4);
+        }
+
+        return null;
+    }
 }

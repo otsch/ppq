@@ -26,6 +26,11 @@ class Config
         }
     }
 
+    public static function getPath(): string
+    {
+        return self::$path;
+    }
+
     /**
      * @throws InvalidQueueDriverException
      */

@@ -4,6 +4,7 @@ namespace Otsch\Ppq;
 
 use Otsch\Ppq\Entities\QueueRecord;
 use Otsch\Ppq\Entities\Values\QueueJobStatus;
+use Otsch\Ppq\Exceptions\InvalidQueueDriverException;
 use Otsch\Ppq\Loggers\EchoLogger;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Process\Process as SymfonyProcess;
@@ -25,6 +26,9 @@ class Queue
         $this->logger = new EchoLogger();
     }
 
+    /**
+     * @throws InvalidQueueDriverException
+     */
     public function hasAvailableSlot(): bool
     {
         $count = $this->runningProcessesCount();
@@ -32,6 +36,9 @@ class Queue
         return $count < $this->concurrentJobs;
     }
 
+    /**
+     * @throws InvalidQueueDriverException
+     */
     public function startWaitingJob(QueueRecord $waitingJob): void
     {
         $process = Kernel::ppqCommand('run-job ' . $waitingJob->id);
@@ -51,6 +58,9 @@ class Queue
         $this->processes[$pid] = new Process($waitingJob, $process);
     }
 
+    /**
+     * @throws InvalidQueueDriverException
+     */
     public function clearRunningJobs(): void
     {
         foreach ($this->getForgottenRunningJobs() as $forgottenRunningJob) {
@@ -60,6 +70,9 @@ class Queue
         }
     }
 
+    /**
+     * @throws InvalidQueueDriverException
+     */
     public function runningProcessesCount(): int
     {
         $forgottenRunningJobs = $this->getForgottenRunningJobs();
@@ -81,6 +94,7 @@ class Queue
 
     /**
      * @return QueueRecord[]
+     * @throws InvalidQueueDriverException
      */
     private function getForgottenRunningJobs(): array
     {
@@ -119,6 +133,9 @@ class Queue
         return $pids;
     }
 
+    /**
+     * @throws InvalidQueueDriverException
+     */
     private function finishForgottenJob(QueueRecord $queueJob): void
     {
         $queueJob->status = QueueJobStatus::lost;

@@ -24,6 +24,12 @@ it('looks for the config file in the path you set via the setPath() method', fun
     expect(Config::get('datapath'))->toBeString();
 });
 
+test('you can get the config path using the getPath() method', function () {
+    Config::setPath('/var/www/project/config/yolo.php');
+
+    expect(Config::getPath())->toBe('/var/www/project/config/yolo.php');
+});
+
 test('the driver method returns a FileDriver if no other driver ist configured', function () {
     Config::setPath(helper_configFilePath());
 

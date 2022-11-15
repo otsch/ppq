@@ -53,3 +53,10 @@ test('list() returns true when the second argv array element is "list"', functio
 test('jobId() returns the third argv argument', function () {
     expect(Argv::make(['vendor/bin/ppq', 'run-job', '123.abc'])->jobId())->toBe('123.abc');
 });
+
+it('gets a config provided as --c argument at the end', function () {
+    expect(
+        Argv::make(['vendor/bin/ppq', 'run-job', '123.abc', '--c=/var/www/project/src/../config/queue.php'])
+            ->configPath()
+    )->toBe('/var/www/project/src/../config/queue.php');
+});

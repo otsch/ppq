@@ -26,7 +26,7 @@ class Kernel
 
     public static function ppqCommand(string $command): SymfonyProcess
     {
-        $command = 'php ' . self::ppqPath() . ' ' . $command;
+        $command = 'php ' . self::ppqPath() . ' ' . $command . ' --c=' . Config::getPath();
 
         return SymfonyProcess::fromShellCommandline($command);
     }
@@ -41,6 +41,8 @@ class Kernel
      */
     public function run(): void
     {
+        $this->setConfigPath();
+
         $this->bootstrap();
 
         if ($this->argv->workQueues()) {
@@ -53,6 +55,15 @@ class Kernel
             $this->checkSchedule();
         } elseif ($this->argv->list()) {
             $this->lister->list();
+        }
+    }
+
+    protected function setConfigPath(): void
+    {
+        $providedConfigPath = $this->argv->configPath();
+
+        if ($providedConfigPath) {
+            Config::setPath($providedConfigPath);
         }
     }
 

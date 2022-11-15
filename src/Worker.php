@@ -10,21 +10,18 @@ use Psr\Log\LoggerInterface;
 class Worker
 {
     /**
-     * @var Queue[]
+     * @var null|Queue[]
      */
-    private array $queues;
+    private ?array $queues = null;
 
     private bool $stopScheduled = false;
-
-    private ?Signal $signal = null;
 
     private LoggerInterface $logger;
 
     public function __construct(
-        private readonly float $checkEveryXSeconds = 0.2,
+        protected readonly float $checkEveryXSeconds = 0.2,
+        protected Signal $signal = new Signal(),
     ) {
-        $this->queues = Config::getQueues();
-
         $this->logger = new EchoLogger();
     }
 
@@ -63,11 +60,23 @@ class Worker
     }
 
     /**
+     * @return Queue[]
+     */
+    private function queues(): array
+    {
+        if (!$this->queues) {
+            $this->queues = Config::getQueues();
+        }
+
+        return $this->queues;
+    }
+
+    /**
      * @throws Exception
      */
     private function checkSignals(): void
     {
-        if ($this->signal()?->isStop()) {
+        if ($this->signal->isStop()) {
             $this->scheduleStop();
 
             if ($this->runningJobs() === 0) {
@@ -76,6 +85,9 @@ class Worker
         }
     }
 
+    /**
+     * @throws Exceptions\InvalidQueueDriverException
+     */
     private function checkQueues(): void
     {
         $this->startWaitingJobs();
@@ -85,17 +97,23 @@ class Worker
         $this->clearDoneJobs();
     }
 
+    /**
+     * @throws Exceptions\InvalidQueueDriverException
+     */
     private function runningJobs(): int
     {
         $count = 0;
 
-        foreach ($this->queues as $queue) {
+        foreach ($this->queues() as $queue) {
             $count += $queue->runningProcessesCount();
         }
 
         return $count;
     }
 
+    /**
+     * @throws Exceptions\InvalidQueueDriverException
+     */
     private function startWaitingJobs(): void
     {
         $driver = Config::getDriver();
@@ -113,9 +131,12 @@ class Worker
         }
     }
 
+    /**
+     * @throws Exceptions\InvalidQueueDriverException
+     */
     private function clearRunningJobs(): void
     {
-        foreach ($this->queues as $queue) {
+        foreach ($this->queues() as $queue) {
             $queue->clearRunningJobs();
         }
     }
@@ -134,7 +155,7 @@ class Worker
     {
         $this->logger->info('No more running jobs, stop running queues.');
 
-        $this->signal()?->reset();
+        $this->signal->reset();
 
         exit;
     }
@@ -146,19 +167,22 @@ class Worker
     {
         return array_map(function ($queue) {
             return $queue->name;
-        }, $this->queues);
+        }, $this->queues());
     }
 
     private function getQueue(string $name): ?Queue
     {
-        return $this->queues[$name] ?? null;
+        return $this->queues()[$name] ?? null;
     }
 
+    /**
+     * @throws Exceptions\InvalidQueueDriverException
+     */
     private function clearDoneJobs(): void
     {
         $driver = Config::getDriver();
 
-        foreach ($this->queues as $queue) {
+        foreach ($this->queues() as $queue) {
             $allQueueRecords = $driver->where($queue->name, status: null);
 
             if (count($allQueueRecords) <= $queue->keepLastXPastJobs) {
@@ -182,18 +206,5 @@ class Worker
     private function queuesAreAlreadyWorking(): bool
     {
         return Process::runningProcessContainingStringsExists(['php', 'vendor/bin/ppq', 'work']);
-    }
-
-    private function signal(): ?Signal
-    {
-        if (!$this->signal) {
-            try {
-                $this->signal = new Signal();
-            } catch (Exception $exception) {
-                $this->logger->warning('Checking signals doesn\'t work: ' . $exception->getMessage());
-            }
-        }
-
-        return $this->signal;
     }
 }
