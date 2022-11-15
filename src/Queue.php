@@ -31,9 +31,7 @@ class Queue
      */
     public function hasAvailableSlot(): bool
     {
-        $count = $this->runningProcessesCount();
-
-        return $count < $this->concurrentJobs;
+        return $this->runningProcessesCount() < $this->concurrentJobs;
     }
 
     /**
@@ -75,21 +73,9 @@ class Queue
      */
     public function runningProcessesCount(): int
     {
-        $forgottenRunningJobs = $this->getForgottenRunningJobs();
+        $this->clearRunningJobs();
 
-        if (count($forgottenRunningJobs) > 0) {
-            $stillRunningForgottenJobs = 0;
-
-            foreach ($forgottenRunningJobs as $forgottenRunningJob) {
-                if ($this->isJobStillRunning($forgottenRunningJob)) {
-                    $stillRunningForgottenJobs++;
-                } else {
-                    $this->finishForgottenJob($forgottenRunningJob);
-                }
-            }
-        }
-
-        return count($forgottenRunningJobs) + count($this->processes);
+        return count($this->processes);
     }
 
     /**

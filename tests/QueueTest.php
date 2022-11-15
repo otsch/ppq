@@ -22,9 +22,11 @@ beforeEach(function () {
     file_put_contents(__DIR__ . '/_testdata/datapath/queue-default', 'a:0:{}');
 });
 
-function helper_addQueueJob(string $queue = 'default'): QueueRecord
+function helper_addQueueJob(string $queue = 'default', ?QueueRecord $job = null): QueueRecord
 {
-    $job = new QueueRecord('default', TestJob::class);
+    if (!$job) {
+        $job = new QueueRecord('default', TestJob::class);
+    }
 
     Config::getDriver()->add($job);
 
@@ -51,7 +53,7 @@ it('starts a waiting job', function () {
     expect($job->status)->toBe(QueueJobStatus::finished);
 });
 
-it('handles concurrently running jobs', function () {
+it('knows if there is a slot available for another job', function () {
     $queue = new Queue('default', 2, 10);
 
     expect($queue->hasAvailableSlot())->toBeTrue();
@@ -75,4 +77,49 @@ it('handles concurrently running jobs', function () {
     expect($jobOne->status)->toBe(QueueJobStatus::finished);
 
     expect($jobTwo->status)->toBe(QueueJobStatus::finished);
+});
+
+it('clears forgotten jobs with status running', function () {
+    $queue = new Queue('default', 2, 10);
+
+    $runningJob = helper_addQueueJob(job: new QueueRecord('default', TestJob::class, QueueJobStatus::running));
+
+    expect(Config::getDriver()->where('default', status: QueueJobStatus::running))->toHaveCount(1);
+
+    $queue->clearRunningJobs();
+
+    expect(Config::getDriver()->where('default', status: QueueJobStatus::running))->toBeEmpty();
+
+    $clearedJob = Config::getDriver()->get($runningJob->id);
+
+    expect($clearedJob->status)->toBe(QueueJobStatus::lost); // @phpstan-ignore-line
+});
+
+it('tells you how many processes are currently running', function () {
+    $queue = new Queue('default', 2, 10);
+
+    // Fake running job that should be identified when checking the runningProcessesCount
+    helper_addQueueJob(job: new QueueRecord('default', TestJob::class, QueueJobStatus::running));
+
+    expect($queue->runningProcessesCount())->toBe(0);
+
+    $queue->startWaitingJob(helper_addQueueJob());
+
+    expect($queue->runningProcessesCount())->toBe(1);
+
+    $queue->startWaitingJob(helper_addQueueJob());
+
+    expect($queue->runningProcessesCount())->toBe(2);
+
+    expect($queue->hasAvailableSlot())->toBeFalse();
+
+    $queue->startWaitingJob(helper_addQueueJob());
+
+    // It can start more than the defined concurrency limit.
+    // The startWaitingJob() method is not responsible for obeying the limit.
+    expect($queue->runningProcessesCount())->toBe(3);
+
+    usleep(200000);
+
+    expect($queue->runningProcessesCount())->toBe(0);
 });
