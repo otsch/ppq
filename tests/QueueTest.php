@@ -39,7 +39,7 @@ it('handles concurrently running jobs', function () {
 
     expect($queue->hasAvailableSlot())->toBeFalse();
 
-    usleep(50000);
+    usleep(100000);
 
     expect($queue->hasAvailableSlot())->toBeTrue();
 });
