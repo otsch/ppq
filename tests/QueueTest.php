@@ -44,7 +44,7 @@ it('starts a waiting job', function () {
 
     expect($job->pid)->not()->toBeNull();
 
-    usleep(50000);
+    usleep(100000);
 
     $queue->hasAvailableSlot();
 
@@ -68,7 +68,7 @@ it('handles concurrently running jobs', function () {
 
     expect($queue->hasAvailableSlot())->toBeFalse();
 
-    usleep(100000);
+    usleep(200000);
 
     expect($queue->hasAvailableSlot())->toBeTrue();
 
