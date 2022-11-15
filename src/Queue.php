@@ -139,14 +139,6 @@ class Queue
             return false;
         }
 
-        $process = SymfonyProcess::fromShellCommandline('cat /proc/' . $queueJob->pid . '/cmdline');
-
-        $process->run();
-
-        if (!$process->isSuccessful()) {
-            return false;
-        }
-
-        return true;
+        return Process::runningProcessWithPidExists($queueJob->pid);
     }
 }

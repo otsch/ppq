@@ -17,6 +17,37 @@ class Process
     ) {
     }
 
+    public static function runningProcessWithPidExists(int $pid): bool
+    {
+        $ownPid = getmypid();
+
+        if ($ownPid === $pid) {
+            return true;
+        }
+
+        $process = self::runCommand('ps x');
+
+        if ($process->isSuccessful()) {
+            foreach (explode(PHP_EOL, $process->getOutput()) as $outputLine) {
+                $splitAtSpace = explode(' ', $outputLine, 2);
+
+                if (is_numeric($splitAtSpace[0]) && (int) $splitAtSpace[0] === $pid) {
+                    return true;
+                }
+            }
+        }
+
+        if (!$process->isSuccessful() || str_contains($process->getOutput(), 'ps: command not found')) {
+            $process = self::runCommand('cat /proc/' . $pid . '/cmdline');
+
+            if ($process->isSuccessful() && !self::processOutputContainsStrings($process, 'No such file')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * @param string|string[] $strings
      * @return bool
@@ -29,11 +60,14 @@ class Process
             return false;
         }
 
-        $process = self::runCommand('ps aux | grep ppq');
+        $process = self::runCommand('ps x');
 
         if ($process->isSuccessful() && self::processOutputContainsStrings($process, $strings)) {
             foreach (explode(PHP_EOL, $process->getOutput()) as $outputLine) {
-                if (str_contains($outputLine, 'vendor/bin/ppq work') && !str_contains($outputLine, (string) $ownPid)) {
+                if (
+                    self::stringContainsStrings($outputLine, $strings) &&
+                    !self::stringContainsStrings($outputLine, (string) $ownPid)
+                ) {
                     return true;
                 }
             }
@@ -105,14 +139,20 @@ class Process
      */
     protected static function processOutputContainsStrings(SymfonyProcess $process, string|array $strings): bool
     {
-        $output = $process->getOutput();
+        return self::stringContainsStrings($process->getOutput(), $strings);
+    }
 
+    /**
+     * @param string|string[] $strings
+     */
+    protected static function stringContainsStrings(string $string, string|array $strings): bool
+    {
         if (is_string($strings)) {
-            return str_contains($output, $strings);
+            return str_contains($string, $strings);
         }
 
-        foreach ($strings as $string) {
-            if (!str_contains($output, $string)) {
+        foreach ($strings as $stringsString) {
+            if (!str_contains($string, $stringsString)) {
                 return false;
             }
         }

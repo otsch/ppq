@@ -94,3 +94,43 @@ it('finishes a process that failed', function () {
 
     expect($this->getActualOutput())->toContain('There was an error');
 });
+
+it('checks if a running process with a certain pid exists', function () {
+    $process = \Symfony\Component\Process\Process::fromShellCommandline('php -r "usleep(30000);";');
+
+    $process->start();
+
+    $pid = $process->getPid();
+
+    expect($pid)->toBeInt()->toBeGreaterThan(0);
+
+    /** @var int $pid */
+
+    expect(Process::runningProcessWithPidExists($pid))->toBeTrue();
+
+    while ($process->isRunning()) {
+        usleep(10000);
+    }
+
+    expect(Process::runningProcessWithPidExists($pid))->toBeFalse();
+});
+
+it('checks if a running process containing certain strings (in command) exists', function () {
+    $process = \Symfony\Component\Process\Process::fromShellCommandline('php -r "usleep(30000);";');
+
+    $process->start();
+
+    $pid = $process->getPid();
+
+    expect($pid)->toBeInt()->toBeGreaterThan(0);
+
+    /** @var int $pid */
+
+    expect(Process::runningProcessContainingStringsExists(['php', 'usleep']))->toBeTrue();
+
+    while ($process->isRunning()) {
+        usleep(10000);
+    }
+
+    expect(Process::runningProcessContainingStringsExists(['php', 'usleep']))->toBeFalse();
+});
