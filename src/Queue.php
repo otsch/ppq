@@ -107,7 +107,7 @@ class Queue
         $pids = [];
 
         foreach ($this->processes as $pid => $process) {
-            if ($process->process && $process->process->isRunning()) {
+            if ($process->process->isRunning()) {
                 $pids[$pid] = $pid;
             } else {
                 $process->finish();
