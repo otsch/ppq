@@ -106,11 +106,11 @@ it('checks if a running process with a certain pid exists', function () {
 
     /** @var int $pid */
 
-    expect(Process::runningProcessWithPidExists($pid))->toBeTrue();
+    expect(Process::runningPhpProcessWithPidExists($pid))->toBeTrue();
 
     $process->stop();
 
-    expect(Process::runningProcessWithPidExists($pid))->toBeFalse();
+    expect(Process::runningPhpProcessWithPidExists($pid))->toBeFalse();
 });
 
 it('checks if a running process containing certain strings (in command) exists', function () {
@@ -124,9 +124,9 @@ it('checks if a running process containing certain strings (in command) exists',
 
     /** @var int $pid */
 
-    expect(Process::runningProcessContainingStringsExists(['php', 'counting.php']))->toBeTrue();
+    expect(Process::runningPhpProcessContainingStringsExists(['php', 'counting.php']))->toBeTrue();
 
     $process->stop();
 
-    expect(Process::runningProcessContainingStringsExists(['php', 'usleep']))->toBeFalse();
+    expect(Process::runningPhpProcessContainingStringsExists(['php', 'usleep']))->toBeFalse();
 });

@@ -3,6 +3,7 @@
 use Otsch\Ppq\Config;
 use Otsch\Ppq\Entities\QueueRecord;
 use Otsch\Ppq\Entities\Values\QueueJobStatus;
+use Otsch\Ppq\Process;
 use Otsch\Ppq\Queue;
 use Stubs\TestJob;
 
@@ -44,9 +45,19 @@ it('starts a waiting job', function () {
 
     expect($job->status)->toBe(QueueJobStatus::running);
 
-    expect($job->pid)->not()->toBeNull();
+    expect($job->pid)->toBeInt()->toBeGreaterThan(0);
 
-    usleep(100000);
+    $pid = $job->pid;
+
+    /** @var int $pid */
+
+    $tries = 0;
+
+    while (Process::runningPhpProcessWithPidExists($pid) && $tries <= 100) {
+        usleep(10000);
+
+        $tries++;
+    }
 
     $queue->hasAvailableSlot();
 

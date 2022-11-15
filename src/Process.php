@@ -17,7 +17,7 @@ class Process
     ) {
     }
 
-    public static function runningProcessWithPidExists(int $pid): bool
+    public static function runningPhpProcessWithPidExists(int $pid): bool
     {
         $ownPid = getmypid();
 
@@ -25,11 +25,13 @@ class Process
             return true;
         }
 
-        $process = self::runCommand('ps x');
+        $process = self::runCommand('ps ax | grep php');
 
         if ($process->isSuccessful()) {
             foreach (explode(PHP_EOL, $process->getOutput()) as $outputLine) {
-                $splitAtSpace = explode(' ', $outputLine, 2);
+                $outputLine = trim($outputLine);
+
+                $splitAtSpace = explode(' ', trim($outputLine), 2);
 
                 if (is_numeric($splitAtSpace[0]) && (int) $splitAtSpace[0] === $pid) {
                     return true;
@@ -40,7 +42,11 @@ class Process
         if (!$process->isSuccessful() || str_contains($process->getOutput(), 'ps: command not found')) {
             $process = self::runCommand('cat /proc/' . $pid . '/cmdline');
 
-            if ($process->isSuccessful() && !self::processOutputContainsStrings($process, 'No such file')) {
+            if (
+                $process->isSuccessful() &&
+                !empty($process->getOutput()) &&
+                !self::processOutputContainsStrings($process, 'No such file')
+            ) {
                 return true;
             }
         }
@@ -52,7 +58,7 @@ class Process
      * @param string|string[] $strings
      * @return bool
      */
-    public static function runningProcessContainingStringsExists(string|array $strings): bool
+    public static function runningPhpProcessContainingStringsExists(string|array $strings): bool
     {
         $ownPid = getmypid();
 
@@ -60,7 +66,7 @@ class Process
             return false;
         }
 
-        $process = self::runCommand('ps x');
+        $process = self::runCommand('ps ax | grep php');
 
         if ($process->isSuccessful() && self::processOutputContainsStrings($process, $strings)) {
             foreach (explode(PHP_EOL, $process->getOutput()) as $outputLine) {

@@ -139,6 +139,6 @@ class Queue
             return false;
         }
 
-        return Process::runningProcessWithPidExists($queueJob->pid);
+        return Process::runningPhpProcessWithPidExists($queueJob->pid);
     }
 }
