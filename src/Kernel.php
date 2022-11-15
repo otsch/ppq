@@ -5,6 +5,7 @@ namespace Otsch\Ppq;
 use Exception;
 use Otsch\Ppq\Contracts\QueueableJob;
 use Otsch\Ppq\Contracts\Scheduler;
+use Symfony\Component\Process\Process as SymfonyProcess;
 
 class Kernel
 {
@@ -13,9 +14,26 @@ class Kernel
     /**
      * @param string[] $argv
      */
-    public function __construct(array $argv)
-    {
+    public function __construct(
+        array $argv,
+        protected Worker $worker = new Worker(),
+        protected Signal $signal = new Signal(),
+        protected Lister $lister = new Lister(),
+        protected Fail $fail = new Fail(),
+    ) {
         $this->argv = Argv::make($argv);
+    }
+
+    public static function ppqCommand(string $command): SymfonyProcess
+    {
+        $command = 'php ' . self::ppqPath() . ' ' . $command;
+
+        return SymfonyProcess::fromShellCommandline($command);
+    }
+
+    public static function ppqPath(): string
+    {
+        return __DIR__ . '/../bin/ppq';
     }
 
     /**
@@ -26,15 +44,15 @@ class Kernel
         $this->bootstrap();
 
         if ($this->argv->workQueues()) {
-            (new Manager())->workQueues();
+            $this->worker->workQueues();
         } elseif ($this->argv->runJob()) {
             $this->runJob();
         } elseif ($this->argv->stopQueues()) {
-            (new Signal())->setStop();
+            $this->signal->setStop();
         } elseif ($this->argv->checkSchedule()) {
             $this->checkSchedule();
         } elseif ($this->argv->list()) {
-            (new Manager())->list();
+            $this->lister->list();
         }
     }
 
@@ -59,25 +77,21 @@ class Kernel
         $job = Config::getDriver()->get($this->argv->jobId());
 
         if (!$job) {
-            error_log('Job with id ' . $this->argv->jobId() . ' not found');
+            $this->fail->withMessage('Job with id ' . $this->argv->jobId() . ' not found');
+        } else {
+            try {
+                $job = new $job->jobClass(...$job->args);
 
-            exit(1);
-        }
+                if (!$job instanceof QueueableJob) {
+                    throw new Exception(
+                        'Can\'t run job because it\'s not an implementation of the QueueableJob interface.'
+                    );
+                }
 
-        try {
-            $job = new $job->jobClass(...$job->args);
-
-            if (!$job instanceof QueueableJob) {
-                throw new Exception(
-                    'Can\'t run job because it\'s not an implementation of the QueueableJob interface.'
-                );
+                $job->invoke();
+            } catch (Exception $exception) {
+                $this->fail->withMessage($exception->getMessage());
             }
-
-            $job->invoke();
-        } catch (Exception $exception) {
-            error_log($exception->getMessage());
-
-            exit(1);
         }
     }
 

@@ -53,9 +53,9 @@ test('the all() method returns the whole config', function () {
 
     expect($configData['datapath'])->toEndWith('/datapath');
 
-    expect($configData['driver'])->toBe(FileDriver::class);
+    expect($configData['driver'])->toBe(SimpleInMemoryDriver::class);
 
-    expect($configData['bootstrap_file'])->toBeNull();
+    expect($configData['bootstrap_file'])->toContain('bootstrap.php');
 
     expect($configData['queues'])->toBe([
         'default' => [
@@ -68,6 +68,6 @@ test('the all() method returns the whole config', function () {
 
     expect($configData['scheduler'])->toBe([
         'class' => Scheduler::class,
-        'active' => false,
+        'active' => true,
     ]);
 });

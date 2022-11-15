@@ -6,14 +6,13 @@ use Exception;
 use Otsch\Ppq\Entities\Values\QueueJobStatus;
 use Otsch\Ppq\Loggers\EchoLogger;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Process\Process as SymfonyProcess;
 
-class Manager
+class Worker
 {
     /**
      * @var Queue[]
      */
-    private array $queues = [];
+    private array $queues;
 
     private bool $stopScheduled = false;
 
@@ -24,23 +23,14 @@ class Manager
     public function __construct(
         private readonly float $checkEveryXSeconds = 0.2,
     ) {
-        $this->buildQueuesFromConfig();
+        $this->queues = Config::getQueues();
 
         $this->logger = new EchoLogger();
     }
 
-    public static function ppqCommand(string $command): SymfonyProcess
-    {
-        $command = 'php ' . self::ppqPath() . ' ' . $command;
-
-        return SymfonyProcess::fromShellCommandline($command);
-    }
-
-    public static function ppqPath(): string
-    {
-        return __DIR__ . '/../bin/ppq';
-    }
-
+    /**
+     * @throws Exception
+     */
     public function workQueues(): void
     {
         if ($this->queuesAreAlreadyWorking()) {
@@ -69,27 +59,6 @@ class Manager
             $this->checkSignals();
 
             $this->checkQueues();
-        }
-    }
-
-    public function list(): void
-    {
-        $driver = Config::getDriver();
-
-        echo PHP_EOL;
-
-        foreach ($this->queues as $queue) {
-            echo "Queue: " . $queue->name . PHP_EOL;
-
-            foreach ($driver->where($queue->name, status: QueueJobStatus::running) as $queueRecord) {
-                echo 'id: ' . $queueRecord->id . ', jobClass: ' . $queueRecord->jobClass . ' - running' . PHP_EOL;
-            }
-
-            foreach ($driver->where($queue->name, status: QueueJobStatus::waiting) as $queueRecord) {
-                echo 'id: ' . $queueRecord->id . ', jobClass: ' . $queueRecord->jobClass . ' - waiting' . PHP_EOL;
-            }
-
-            echo PHP_EOL;
         }
     }
 
@@ -125,21 +94,6 @@ class Manager
         }
 
         return $count;
-    }
-
-    private function buildQueuesFromConfig(): void
-    {
-        $queueConfigs = Config::get('queues');
-
-        if (is_array($queueConfigs)) {
-            foreach ($queueConfigs as $queueName => $queueConfig) {
-                $this->queues[$queueName] = new Queue(
-                    $queueName,
-                    $queueConfig['concurrent_jobs'] ?? 2,
-                    $queueConfig['keep_last_x_past_jobs'] ?? 100,
-                );
-            }
-        }
     }
 
     private function startWaitingJobs(): void

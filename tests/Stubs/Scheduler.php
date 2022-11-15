@@ -6,5 +6,6 @@ class Scheduler implements \Otsch\Ppq\Contracts\Scheduler
 {
     public function checkScheduleAndQueue(): void
     {
+        echo 'Schedule checked';
     }
 }
