@@ -96,7 +96,7 @@ it('finishes a process that failed', function () {
 });
 
 it('checks if a running process with a certain pid exists', function () {
-    $process = \Symfony\Component\Process\Process::fromShellCommandline('php -r "usleep(100000);";');
+    $process = \Symfony\Component\Process\Process::fromShellCommandline('php ' . __DIR__ . '/_testdata/counting.php');
 
     $process->start();
 
@@ -108,15 +108,13 @@ it('checks if a running process with a certain pid exists', function () {
 
     expect(Process::runningProcessWithPidExists($pid))->toBeTrue();
 
-    while ($process->isRunning()) {
-        usleep(10000);
-    }
+    $process->stop();
 
     expect(Process::runningProcessWithPidExists($pid))->toBeFalse();
 });
 
 it('checks if a running process containing certain strings (in command) exists', function () {
-    $process = \Symfony\Component\Process\Process::fromShellCommandline('php -r "usleep(100000);";');
+    $process = \Symfony\Component\Process\Process::fromShellCommandline('php ' . __DIR__ . '/_testdata/counting.php');
 
     $process->start();
 
@@ -126,11 +124,9 @@ it('checks if a running process containing certain strings (in command) exists',
 
     /** @var int $pid */
 
-    expect(Process::runningProcessContainingStringsExists(['php', 'usleep']))->toBeTrue();
+    expect(Process::runningProcessContainingStringsExists(['php', 'counting.php']))->toBeTrue();
 
-    while ($process->isRunning()) {
-        usleep(10000);
-    }
+    $process->stop();
 
     expect(Process::runningProcessContainingStringsExists(['php', 'usleep']))->toBeFalse();
 });
