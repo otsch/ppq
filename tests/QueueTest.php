@@ -7,23 +7,36 @@ use Otsch\Ppq\Queue;
 use Stubs\TestJob;
 
 beforeEach(function () {
-    Config::setPath(__DIR__ . '/_testdata/config/ppq.php');
+    Config::setPath(__DIR__ . '/_testdata/config/filesystem-ppq.php');
 });
 
+function helper_addQueueJob(string $queue = 'default'): QueueRecord
+{
+    $job = new QueueRecord('default', TestJob::class);
+
+    Config::getDriver()->add($job);
+
+    return $job;
+}
+
 it('starts a waiting job', function () {
-    $waitingJob = new QueueRecord('default', TestJob::class);
+    $job = helper_addQueueJob();
+
+    Config::getDriver()->add($job);
 
     $queue = new Queue('default', 2, 10);
 
-    $queue->startWaitingJob($waitingJob);
+    $queue->startWaitingJob($job);
 
-    expect($waitingJob->status)->toBe(QueueJobStatus::running);
+    expect($job->status)->toBe(QueueJobStatus::running);
 
-    expect($waitingJob->pid)->not()->toBeNull();
+    expect($job->pid)->not()->toBeNull();
 
-    usleep(20000);
+    usleep(50000);
 
     $queue->hasAvailableSlot();
+
+    expect($job->status)->toBe(QueueJobStatus::finished);
 });
 
 it('handles concurrently running jobs', function () {
@@ -31,15 +44,23 @@ it('handles concurrently running jobs', function () {
 
     expect($queue->hasAvailableSlot())->toBeTrue();
 
-    $queue->startWaitingJob(new QueueRecord('default', TestJob::class));
+    $jobOne = helper_addQueueJob();
+
+    $queue->startWaitingJob($jobOne);
 
     expect($queue->hasAvailableSlot())->toBeTrue();
 
-    $queue->startWaitingJob(new QueueRecord('default', TestJob::class));
+    $jobTwo = helper_addQueueJob();
+
+    $queue->startWaitingJob($jobTwo);
 
     expect($queue->hasAvailableSlot())->toBeFalse();
 
-    usleep(60000);
+    usleep(100000);
 
     expect($queue->hasAvailableSlot())->toBeTrue();
+
+    expect($jobOne->status)->toBe(QueueJobStatus::finished);
+
+    expect($jobTwo->status)->toBe(QueueJobStatus::finished);
 });
