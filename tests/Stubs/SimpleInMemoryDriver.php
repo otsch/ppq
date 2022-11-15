@@ -8,26 +8,28 @@ use Otsch\Ppq\Entities\QueueRecord;
 class SimpleInMemoryDriver extends AbstractQueueDriver
 {
     /**
-     * @var QueueRecord[]
+     * @var array<string, array<string, QueueRecord>>
      */
     public array $queue = [];
 
     public function add(QueueRecord $queueRecord): void
     {
-        $this->queue[$queueRecord->id] = $queueRecord;
+        $this->queue[$queueRecord->queue][$queueRecord->id] = $queueRecord;
     }
 
     public function update(QueueRecord $queueRecord): void
     {
-        if (isset($this->queue[$queueRecord->id])) {
-            $this->queue[$queueRecord->id] = $queueRecord;
+        if (isset($this->queue[$queueRecord->queue][$queueRecord->id])) {
+            $this->queue[$queueRecord->queue][$queueRecord->id] = $queueRecord;
         }
     }
 
     public function get(string $id): ?QueueRecord
     {
-        if (isset($this->queue[$id])) {
-            return $this->queue[$id];
+        foreach ($this->queue as $queueName => $queueJobs) {
+            if (isset($this->queue[$queueName][$id])) {
+                return $this->queue[$queueName][$id];
+            }
         }
 
         return null;
@@ -35,13 +37,15 @@ class SimpleInMemoryDriver extends AbstractQueueDriver
 
     public function forget(string $id): void
     {
-        if (isset($this->queue[$id])) {
-            unset($this->queue[$id]);
+        $queueJob = $this->get($id);
+
+        if ($queueJob) {
+            unset($this->queue[$queueJob->queue][$id]);
         }
     }
 
     protected function getQueue(string $queue): array
     {
-        return $this->queue;
+        return $this->queue[$queue] ?? [];
     }
 }

@@ -27,9 +27,9 @@ it('calls the add method of the QueueDriver when a job is dispatched', function 
         ->job(TestJob::class)
         ->dispatch();
 
-    $queueRecord = reset($driver->queue);
+    $queueRecord = reset($driver->queue['default']);
 
-    expect(reset($driver->queue))->toBeInstanceOf(QueueRecord::class);
+    expect(reset($driver->queue['default']))->toBeInstanceOf(QueueRecord::class);
 
     /** @var QueueRecord $queueRecord */
 
@@ -48,7 +48,7 @@ it('adds arguments to the added QueueRecord when calling the args method', funct
         ->args(['foo' => 'one', 'bar' => 2])
         ->dispatch();
 
-    $queueRecord = reset($driver->queue);
+    $queueRecord = reset($driver->queue['default']);
 
     /** @var QueueRecord $queueRecord */
 
@@ -62,7 +62,7 @@ it('sets the queue property of the QueueRecord instance when dispatching a job t
         ->job(TestJob::class)
         ->dispatch();
 
-    $queueRecord = reset($driver->queue);
+    $queueRecord = reset($driver->queue['special-queue']);
 
     /** @var QueueRecord $queueRecord */
 
@@ -78,7 +78,7 @@ it(
             ->job(TestJob::class)
             ->dispatchIfNotYetInQueue();
 
-        expect($driver->queue)->toHaveCount(1);
+        expect($driver->queue['default'])->toHaveCount(1);
     }
 );
 
@@ -98,7 +98,7 @@ it(
             ->job(TestJob::class)
             ->dispatchIfNotYetInQueue();
 
-        expect($driver->queue)->toHaveCount(1);
+        expect($driver->queue['default'])->toHaveCount(1);
     }
 );
 
@@ -114,9 +114,9 @@ it(
             ->job(TestJob::class)
             ->dispatch();
 
-        expect($driver->queue)->toHaveCount(1);
+        expect($driver->queue['default'])->toHaveCount(1);
 
-        $jobInQueue = reset($driver->queue);
+        $jobInQueue = reset($driver->queue['default']);
 
         /** @var QueueRecord $jobInQueue */
 
@@ -128,7 +128,7 @@ it(
             ->job(TestJob::class)
             ->dispatchIfNotYetInQueue();
 
-        expect($driver->queue)->toHaveCount(1);
+        expect($driver->queue['default'])->toHaveCount(1);
     }
 );
 
@@ -144,9 +144,9 @@ it(
             ->job(TestJob::class)
             ->dispatch();
 
-        expect($driver->queue)->toHaveCount(1);
+        expect($driver->queue['default'])->toHaveCount(1);
 
-        $jobInQueue = reset($driver->queue);
+        $jobInQueue = reset($driver->queue['default']);
 
         /** @var QueueRecord $jobInQueue */
 
@@ -158,7 +158,7 @@ it(
             ->job(TestJob::class)
             ->dispatchIfNotYetInQueue();
 
-        expect($driver->queue)->toHaveCount(2);
+        expect($driver->queue['default'])->toHaveCount(2);
     }
 )->with([QueueJobStatus::failed, QueueJobStatus::finished, QueueJobStatus::lost]);
 
@@ -180,7 +180,7 @@ it(
             ->args(['foo' => 'bar', 'yo' => 'lo'])
             ->dispatchIfNotYetInQueue();
 
-        expect($driver->queue)->toHaveCount(1);
+        expect($driver->queue['default'])->toHaveCount(1);
     }
 );
 
@@ -197,9 +197,9 @@ it(
             ->args(['foo' => 'bar', 'yo' => 'lo'])
             ->dispatch();
 
-        expect($driver->queue)->toHaveCount(1);
+        expect($driver->queue['default'])->toHaveCount(1);
 
-        $jobInQueue = reset($driver->queue);
+        $jobInQueue = reset($driver->queue['default']);
 
         /** @var QueueRecord $jobInQueue */
 
@@ -212,7 +212,7 @@ it(
             ->args(['foo' => 'bar', 'yo' => 'lo'])
             ->dispatchIfNotYetInQueue();
 
-        expect($driver->queue)->toHaveCount(1);
+        expect($driver->queue['default'])->toHaveCount(1);
     }
 );
 
@@ -229,9 +229,9 @@ it(
             ->args(['foo' => 'bar', 'yo' => 'lo'])
             ->dispatch();
 
-        expect($driver->queue)->toHaveCount(1);
+        expect($driver->queue['default'])->toHaveCount(1);
 
-        $jobInQueue = reset($driver->queue);
+        $jobInQueue = reset($driver->queue['default']);
 
         /** @var QueueRecord $jobInQueue */
 
@@ -244,7 +244,7 @@ it(
             ->args(['foo' => 'bar', 'yo' => 'lo'])
             ->dispatchIfNotYetInQueue();
 
-        expect($driver->queue)->toHaveCount(2);
+        expect($driver->queue['default'])->toHaveCount(2);
     }
 )->with([QueueJobStatus::failed, QueueJobStatus::finished, QueueJobStatus::lost]);
 
@@ -261,9 +261,9 @@ it(
             ->args(['foo' => 'bar', 'yo' => 'lo'])
             ->dispatch();
 
-        expect($driver->queue)->toHaveCount(1);
+        expect($driver->queue['default'])->toHaveCount(1);
 
-        $jobInQueue = reset($driver->queue);
+        $jobInQueue = reset($driver->queue['default']);
 
         /** @var QueueRecord $jobInQueue */
 
@@ -276,7 +276,7 @@ it(
             ->args(['foo' => 'lo', 'yo' => 'bar'])
             ->dispatchIfNotYetInQueue();
 
-        expect($driver->queue)->toHaveCount(2);
+        expect($driver->queue['default'])->toHaveCount(2);
     }
 )->with([
     QueueJobStatus::waiting,
