@@ -96,7 +96,7 @@ it('finishes a process that failed', function () {
 });
 
 it('checks if a running process with a certain pid exists', function () {
-    $process = \Symfony\Component\Process\Process::fromShellCommandline('php -r "usleep(30000);";');
+    $process = \Symfony\Component\Process\Process::fromShellCommandline('php -r "usleep(50000);";');
 
     $process->start();
 
@@ -116,7 +116,7 @@ it('checks if a running process with a certain pid exists', function () {
 });
 
 it('checks if a running process containing certain strings (in command) exists', function () {
-    $process = \Symfony\Component\Process\Process::fromShellCommandline('php -r "usleep(30000);";');
+    $process = \Symfony\Component\Process\Process::fromShellCommandline('php -r "usleep(50000);";');
 
     $process->start();
 
