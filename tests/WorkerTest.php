@@ -10,10 +10,36 @@ use Symfony\Component\Process\Process;
 class WorkerProcess
 {
     public static ?Process $process = null;
+
+    public static function work(): void
+    {
+        if (self::$process && !self::$process->isRunning()) {
+            self::stop();
+        }
+
+        if (!self::$process) {
+            self::$process = Kernel::ppqCommand('work');
+
+            self::$process->start();
+
+            usleep(50000);
+        }
+    }
+
+    public static function stop(): void
+    {
+        if (self::$process) {
+            self::$process->stop();
+
+            self::$process = null;
+        }
+    }
 }
 
 beforeEach(function () {
     Config::setPath(__DIR__ . '/_testdata/config/filesystem-ppq.php');
+
+    WorkerProcess::work();
 });
 
 beforeAll(function () {
@@ -21,18 +47,16 @@ beforeAll(function () {
 
     helper_cleanUpDataPathQueueFiles();
 
-    WorkerProcess::$process = Kernel::ppqCommand('work');
-
-    WorkerProcess::$process->start();
+    WorkerProcess::work();
 });
 
 afterAll(function () {
-    if (WorkerProcess::$process?->isRunning()) {
-        WorkerProcess::$process->stop();
-    }
+    WorkerProcess::stop();
 });
 
 it('processes queue jobs', function () {
+    expect(\Otsch\Ppq\Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']))->toBeTrue();
+
     $job = new QueueRecord('default', TestJob::class);
 
     Config::getDriver()->add($job);
@@ -51,6 +75,8 @@ it('processes queue jobs', function () {
 });
 
 it('removes done (finished, failed, lost) jobs that exceed the configured limit of jobs to keep', function () {
+    expect(\Otsch\Ppq\Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']))->toBeTrue();
+
     Config::getDriver()->add(new QueueRecord('default', TestJob::class, QueueJobStatus::finished));
 
     Config::getDriver()->add(new QueueRecord('default', TestJob::class, QueueJobStatus::finished));
