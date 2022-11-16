@@ -129,7 +129,7 @@ it('checks if a running process containing certain strings (in command) exists',
     $process->stop();
 
     expect(Process::runningPhpProcessContainingStringsExists(['counting.php']))->toBeFalse();
-});
+})->only();
 
 test('checking if a running process containing certain strings exists, exclude the current process', function () {
     $process = \Symfony\Component\Process\Process::fromShellCommandline(
