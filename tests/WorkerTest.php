@@ -80,10 +80,12 @@ it('processes queue jobs', function () {
             throw new Exception('Job disappeared');
         }
 
-        var_dump($updatedJob->status);
-
         return $updatedJob->status === QueueJobStatus::finished ? $updatedJob : false;
     });
+
+    if (!$finishedJob instanceof QueueRecord) {
+        var_dump(WorkerProcess::$process?->getOutput());
+    }
 
     expect($finishedJob)->toBeInstanceOf(QueueRecord::class);
 

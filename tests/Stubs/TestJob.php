@@ -8,7 +8,8 @@ class TestJob implements QueueableJob
 {
     public function invoke(): void
     {
-        usleep(rand(10000, 20000));
+        for ($i = 0; $i < 999999; $i++) {
+        }
 
         echo "Successfully finished TestJob";
     }
