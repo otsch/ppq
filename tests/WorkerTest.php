@@ -90,7 +90,7 @@ it('processes queue jobs', function () {
     expect($finishedJob)->toBeInstanceOf(QueueRecord::class);
 
     expect($finishedJob->status)->toBe(QueueJobStatus::finished);
-})->only();
+});
 
 it('removes done (finished, failed, lost) jobs that exceed the configured limit of jobs to keep', function () {
     expect(\Otsch\Ppq\Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']))->toBeTrue();

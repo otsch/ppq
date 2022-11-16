@@ -124,9 +124,19 @@ it('checks if a running process containing certain strings (in command) exists',
 
     /** @var int $pid */
 
-    expect(Process::runningPhpProcessContainingStringsExists(['php', 'counting.php']))->toBeTrue();
+    expect(Process::runningPhpProcessContainingStringsExists(['counting.php']))->toBeTrue();
 
     $process->stop();
 
-    expect(Process::runningPhpProcessContainingStringsExists(['php', 'usleep']))->toBeFalse();
+    expect(Process::runningPhpProcessContainingStringsExists(['counting.php']))->toBeFalse();
+});
+
+test('checking if a running process containing certain strings exists, exclude the current process', function () {
+    $process = \Symfony\Component\Process\Process::fromShellCommandline(
+        'php ' . __DIR__ . '/_testdata/check-process-already-running.php'
+    );
+
+    $process->run();
+
+    expect($process->getOutput())->toBe('no');
 });

@@ -61,15 +61,17 @@ class Process
         $process = self::runCommand('ps ax | grep php');
 
         if ($process->isSuccessful() && self::processOutputContainsStrings($process, $strings)) {
-            var_dump('own pid: ' . $ownPid);
-
             foreach (explode(PHP_EOL, $process->getOutput()) as $outputLine) {
+                $pid = self::getPidFromPsCommandOutputLine($outputLine);
+
+                if (!$pid || $pid === $ownPid) {
+                    continue;
+                }
+
                 if (
                     self::stringContainsStrings($outputLine, $strings) &&
-                    !self::stringContainsStrings($outputLine, (string) $ownPid)
+                    !self::isOwnPidOrOneOffDuplicate($pid, $outputLine, $strings, $ownPid)
                 ) {
-                    var_dump('found process: ' . $outputLine);
-
                     return true;
                 }
             }
@@ -172,7 +174,7 @@ class Process
 
                 $pid = (int) trim($pid);
 
-                if (self::isOwnPidOrOneOffDuplicate($pid, $strings, $ownPid)) {
+                if (self::isOwnPidOrOneOffDuplicateWherePsCommandNotAvailable($pid, $strings, $ownPid)) {
                     continue;
                 }
 
@@ -188,25 +190,44 @@ class Process
     }
 
     /**
-     * I noticed that in environments where processes can only be checked via /proc/ dir, it often contains a duplicate
-     * of a process/command with a pid that is one off (-1/+1). When checking for a certain running process we want to
-     * exclude the current process we're in. So if a found process's pid is one of the pid of the current PHP process
-     * and both (current and one off) match the search request, exclude that process.
+     * I noticed that the list of running processes often contains a duplicate of a process/command with a pid that is
+     * one off (-1/+1). When checking for a certain running process we want to exclude the current process we're in.
+     * So if a found process's pid is one of the pid of the current PHP process and both (current and one off) match
+     * the search request, exclude that process.
      *
-     * @param int $pid
      * @param string|string[] $strings
-     * @param int|null $ownPid
-     * @return bool
      */
     protected static function isOwnPidOrOneOffDuplicate(
         int $pid,
+        string $outputLine,
         string|array $strings,
-        ?int $ownPid = null
+        int $ownPid
     ): bool {
-        if (!$ownPid) {
-            $ownPid = getmypid();
+        if ($pid === $ownPid) {
+            return true;
         }
 
+        if ($pid === $ownPid - 1 || $pid === $ownPid + 1) {
+            if (self::stringContainsStrings($outputLine, $strings)) {
+                $process = self::runCommand('ps -q ' . $ownPid);
+
+                return $process->isSuccessful() && self::processOutputContainsStrings($process, $strings);
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Same as isOwnPidOrOneOffDuplicate() for environments where ps command is not available.
+     *
+     * @param string|string[] $strings
+     */
+    protected static function isOwnPidOrOneOffDuplicateWherePsCommandNotAvailable(
+        int $pid,
+        string|array $strings,
+        int $ownPid = null
+    ): bool {
         if ($pid === $ownPid) {
             return true;
         }
@@ -214,9 +235,7 @@ class Process
         if ($pid === $ownPid - 1 || $pid === $ownPid + 1) {
             $process = self::runCommand('cat /proc/' . $ownPid . '/cmdline');
 
-            if (!$process->isSuccessful() || !self::processOutputContainsStrings($process, $strings)) {
-                return false;
-            } else {
+            if ($process->isSuccessful() && self::processOutputContainsStrings($process, $strings)) {
                 $process = self::runCommand('cat /proc/' . $pid . '/cmdline');
 
                 return $process->isSuccessful() && self::processOutputContainsStrings($process, $strings);
@@ -224,5 +243,18 @@ class Process
         }
 
         return false;
+    }
+
+    protected static function getPidFromPsCommandOutputLine(string $line): ?int
+    {
+        $line = trim($line);
+
+        $splitAtSpace = explode(' ', $line, 2);
+
+        if (!is_numeric($splitAtSpace[0])) {
+            return null;
+        }
+
+        return (int) $splitAtSpace[0];
     }
 }
