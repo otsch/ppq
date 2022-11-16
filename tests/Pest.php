@@ -54,7 +54,7 @@ function helper_cleanUpDataPathQueueFiles(): void
     }
 }
 
-function helper_tryUntil(Closure $callback, mixed $arg = null, int $maxTries = 100, int $sleep = 10000): mixed
+function helper_tryUntil(Closure $callback, mixed $arg = null, int $maxTries = 500, int $sleep = 10000): mixed
 {
     $tries = 0;
 
