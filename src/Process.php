@@ -61,7 +61,9 @@ class Process
         $process = self::runCommand('ps ax | grep php');
 
         if ($process->isSuccessful() && self::processOutputContainsStrings($process, $strings)) {
-            foreach (explode(PHP_EOL, $process->getOutput()) as $outputLine) {
+            $processOutput = $process->getOutput();
+
+            foreach (explode(PHP_EOL, $processOutput) as $outputLine) {
                 $pid = self::getPidFromPsCommandOutputLine($outputLine);
 
                 if (!$pid || $pid === $ownPid) {
@@ -70,7 +72,7 @@ class Process
 
                 if (
                     self::stringContainsStrings($outputLine, $strings) &&
-                    !self::isOwnPidOrOneOffDuplicate($pid, $outputLine, $strings, $ownPid)
+                    !self::isOwnPidOrOneOffDuplicate($pid, $outputLine, $strings, $ownPid, $processOutput)
                 ) {
                     var_dump('found process: ' . $outputLine);
                     var_dump('own pid: ' . $ownPid . ', process pid: ' . $pid);
@@ -204,7 +206,8 @@ class Process
         int $pid,
         string $outputLine,
         string|array $strings,
-        int $ownPid
+        int $ownPid,
+        string $psCommandOutput,
     ): bool {
         if ($pid === $ownPid) {
             return true;
@@ -216,23 +219,40 @@ class Process
             if (self::stringContainsStrings($outputLine, $strings)) {
                 var_dump('contains search strings');
 
-                $process = self::runCommand('ps -q ' . $ownPid);
+                $ownProcess = self::findOwnProcessInPsCommandOutput($psCommandOutput, $ownPid);
 
-                var_dump($process->isSuccessful());
+                if (!$ownProcess) {
+                    var_dump('own process not found');
 
-                if ($process->isSuccessful()) {
-                    var_dump($process->getOutput());
-
-                    var_dump(self::processOutputContainsStrings($process, $strings));
+                    // Can't find command of own process, but it's very likely that the process in question is a
+                    // duplicate. Returning false here can have worse consequences than falsely returning true.
+                    return true;
                 }
 
-                return $process->isSuccessful() && self::processOutputContainsStrings($process, $strings);
+                var_dump('own process: ' . $ownProcess);
+
+                var_dump(self::stringContainsStrings($ownProcess, $strings));
+
+                return self::stringContainsStrings($ownProcess, $strings);
             } else {
                 var_dump('doesnt contain search strings');
             }
         }
 
         return false;
+    }
+
+    protected static function findOwnProcessInPsCommandOutput(string $psCommandOutput, int $ownPid): ?string
+    {
+        foreach (explode(PHP_EOL, $psCommandOutput) as $outputLine) {
+            $pid = self::getPidFromPsCommandOutputLine($outputLine);
+
+            if ($pid === $ownPid) {
+                return $outputLine;
+            }
+        }
+
+        return null;
     }
 
     /**
