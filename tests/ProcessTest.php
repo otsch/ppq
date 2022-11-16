@@ -128,6 +128,8 @@ it('checks if a running process containing certain strings (in command) exists',
 
     $process->stop();
 
+    usleep(100000);
+
     expect(Process::runningPhpProcessContainingStringsExists(['counting.php']))->toBeFalse();
 })->only();
 
