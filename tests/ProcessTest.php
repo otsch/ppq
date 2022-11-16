@@ -128,10 +128,12 @@ it('checks if a running process containing certain strings (in command) exists',
 
     $process->stop();
 
-    usleep(100000);
+    helper_tryUntil(function () {
+        return Process::runningPhpProcessContainingStringsExists(['counting.php']) === false;
+    }, maxTries: 10);
 
     expect(Process::runningPhpProcessContainingStringsExists(['counting.php']))->toBeFalse();
-})->only();
+});
 
 test('checking if a running process containing certain strings exists, exclude the current process', function () {
     $process = \Symfony\Component\Process\Process::fromShellCommandline(
