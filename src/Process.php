@@ -72,6 +72,9 @@ class Process
                     self::stringContainsStrings($outputLine, $strings) &&
                     !self::isOwnPidOrOneOffDuplicate($pid, $outputLine, $strings, $ownPid)
                 ) {
+                    var_dump('found process: ' . $outputLine);
+                    var_dump('own pid: ' . $ownPid . ', process pid: ' . $pid);
+
                     return true;
                 }
             }

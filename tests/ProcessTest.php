@@ -139,4 +139,4 @@ test('checking if a running process containing certain strings exists, exclude t
     $process->run();
 
     expect($process->getOutput())->toBe('no');
-});
+})->only();
