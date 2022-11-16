@@ -40,15 +40,7 @@ class Process
         }
 
         if (!$process->isSuccessful() || str_contains($process->getOutput(), 'ps: command not found')) {
-            $process = self::runCommand('cat /proc/' . $pid . '/cmdline');
-
-            if (
-                $process->isSuccessful() &&
-                !empty($process->getOutput()) &&
-                !self::processOutputContainsStrings($process, 'No such file')
-            ) {
-                return true;
-            }
+            return self::runningPhpProcessWithPidExistsWherePsCommandNotAvailable($pid);
         }
 
         return false;
@@ -80,23 +72,7 @@ class Process
         }
 
         if (!$process->isSuccessful() || str_contains($process->getOutput(), 'ps: command not found')) {
-            $process = self::runCommand('cd /proc && ls');
-
-            if ($process->isSuccessful()) {
-                foreach (explode(PHP_EOL, $process->getOutput()) as $pid) {
-                    $pid = trim($pid);
-
-                    if (!is_numeric($pid) || (int) $pid === $ownPid) {
-                        continue;
-                    }
-
-                    $process = self::runCommand('cat /proc/' . $pid . '/cmdline');
-
-                    if ($process->isSuccessful() && self::processOutputContainsStrings($process, $strings)) {
-                        return true;
-                    }
-                }
-            }
+            return self::runningPhpProcessContainingStringsExistsWherePsCommandNotAvailable($strings, $ownPid);
         }
 
         return false;
@@ -164,5 +140,85 @@ class Process
         }
 
         return true;
+    }
+
+    protected static function runningPhpProcessWithPidExistsWherePsCommandNotAvailable(int $pid): bool
+    {
+        $process = self::runCommand('cat /proc/' . $pid . '/cmdline');
+
+        return $process->isSuccessful() &&
+            !empty($process->getOutput()) &&
+            !self::processOutputContainsStrings($process, 'No such file');
+    }
+
+    /**
+     * @param string|string[] $strings
+     */
+    protected static function runningPhpProcessContainingStringsExistsWherePsCommandNotAvailable(
+        string|array $strings,
+        int $ownPid,
+    ): bool {
+        $process = self::runCommand('cd /proc && ls');
+
+        if ($process->isSuccessful()) {
+            foreach (explode(PHP_EOL, $process->getOutput()) as $pid) {
+                if (!is_numeric(trim($pid))) {
+                    continue;
+                }
+
+                $pid = (int) trim($pid);
+
+                if (self::isOwnPidOrOneOffDuplicate($pid, $strings, $ownPid)) {
+                    continue;
+                }
+
+                $process = self::runCommand('cat /proc/' . $pid . '/cmdline');
+
+                if ($process->isSuccessful() && self::processOutputContainsStrings($process, $strings)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * I noticed that in environments where processes can only be checked via /proc/ dir, it often contains a duplicate
+     * of a process/command with a pid that is one off (-1/+1). When checking for a certain running process we want to
+     * exclude the current process we're in. So if a found process's pid is one of the pid of the current PHP process
+     * and both (current and one off) match the search request, exclude that process.
+     *
+     * @param int $pid
+     * @param string|string[] $strings
+     * @param int|null $ownPid
+     * @return bool
+     */
+    protected static function isOwnPidOrOneOffDuplicate(
+        int $pid,
+        string|array $strings,
+        ?int $ownPid = null
+    ): bool {
+        if (!$ownPid) {
+            $ownPid = getmypid();
+        }
+
+        if ($pid === $ownPid) {
+            return true;
+        }
+
+        if ($pid === $ownPid - 1 || $pid === $ownPid + 1) {
+            $process = self::runCommand('cat /proc/' . $ownPid . '/cmdline');
+
+            if (!$process->isSuccessful() || !self::processOutputContainsStrings($process, $strings)) {
+                return false;
+            } else {
+                $process = self::runCommand('cat /proc/' . $pid . '/cmdline');
+
+                return $process->isSuccessful() && self::processOutputContainsStrings($process, $strings);
+            }
+        }
+
+        return false;
     }
 }

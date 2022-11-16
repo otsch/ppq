@@ -205,6 +205,6 @@ class Worker
 
     private function queuesAreAlreadyWorking(): bool
     {
-        return Process::runningPhpProcessContainingStringsExists(['vendor/bin/ppq', 'work']);
+        return Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']);
     }
 }

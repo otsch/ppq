@@ -6,11 +6,9 @@ use Otsch\Ppq\Signal;
 beforeEach(function () {
     Config::setPath(__DIR__ . '/_testdata/config/ppq.php');
 
-    if (!file_exists(__DIR__ . '/_testdata/datapath/signal')) {
-        touch(__DIR__ . '/_testdata/datapath/signal');
+    if (file_exists(__DIR__ . '/_testdata/datapath/signal')) {
+        file_put_contents(__DIR__ . '/_testdata/datapath/signal', '');
     }
-
-    file_put_contents(__DIR__ . '/_testdata/datapath/signal', '');
 });
 
 it('sets the stop signal', function () {

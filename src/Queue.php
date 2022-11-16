@@ -7,7 +7,6 @@ use Otsch\Ppq\Entities\Values\QueueJobStatus;
 use Otsch\Ppq\Exceptions\InvalidQueueDriverException;
 use Otsch\Ppq\Loggers\EchoLogger;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Process\Process as SymfonyProcess;
 
 class Queue
 {

@@ -12,9 +12,11 @@ return [
     'queues' => [
         'default' => [
             'concurrent_jobs' => 2,
+            'keep_last_x_past_jobs' => 10,
         ],
         'other_queue' => [
             'concurrent_jobs' => 3,
+            'keep_last_x_past_jobs' => 10,
         ],
     ],
 ];

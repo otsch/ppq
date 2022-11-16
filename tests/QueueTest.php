@@ -10,17 +10,7 @@ use Stubs\TestJob;
 beforeEach(function () {
     Config::setPath(__DIR__ . '/_testdata/config/filesystem-ppq.php');
 
-    if (!file_exists(__DIR__ . '/_testdata/datapath/index')) {
-        touch(__DIR__ . '/_testdata/datapath/index');
-    }
-
-    file_put_contents(__DIR__ . '/_testdata/datapath/index', 'a:0:{}');
-
-    if (!file_exists(__DIR__ . '/_testdata/datapath/queue-default')) {
-        touch(__DIR__ . '/_testdata/datapath/queue-default');
-    }
-
-    file_put_contents(__DIR__ . '/_testdata/datapath/queue-default', 'a:0:{}');
+    helper_cleanUpDataPathQueueFiles();
 });
 
 function helper_addQueueJob(string $queue = 'default', ?QueueRecord $job = null): QueueRecord
@@ -51,15 +41,11 @@ it('starts a waiting job', function () {
 
     /** @var int $pid */
 
-    $tries = 0;
+    helper_tryUntil(function () use ($pid) {
+        return !Process::runningPhpProcessWithPidExists($pid);
+    });
 
-    while (Process::runningPhpProcessWithPidExists($pid) && $tries <= 100) {
-        usleep(10000);
-
-        $tries++;
-    }
-
-    $queue->hasAvailableSlot();
+    expect($queue->hasAvailableSlot())->toBeTrue();
 
     expect($job->status)->toBe(QueueJobStatus::finished);
 });
@@ -69,11 +55,15 @@ it('knows if there is a slot available for another job', function () {
 
     expect($queue->hasAvailableSlot())->toBeTrue();
 
+    expect($queue->runningProcessesCount())->toBe(0);
+
     $jobOne = helper_addQueueJob();
 
     $queue->startWaitingJob($jobOne);
 
     expect($queue->hasAvailableSlot())->toBeTrue();
+
+    expect($queue->runningProcessesCount())->toBe(1);
 
     $jobTwo = helper_addQueueJob();
 
@@ -81,13 +71,19 @@ it('knows if there is a slot available for another job', function () {
 
     expect($queue->hasAvailableSlot())->toBeFalse();
 
-    usleep(200000);
+    helper_tryUntil(function () use ($queue) {
+        return $queue->runningProcessesCount() < 2;
+    });
 
     expect($queue->hasAvailableSlot())->toBeTrue();
 
-    expect($jobOne->status)->toBe(QueueJobStatus::finished);
+    helper_tryUntil(function () use ($queue) {
+        return $queue->runningProcessesCount() === 0;
+    });
 
-    expect($jobTwo->status)->toBe(QueueJobStatus::finished);
+    expect(Config::getDriver()->get($jobOne->id)?->status)->toBe(QueueJobStatus::finished);
+
+    expect(Config::getDriver()->get($jobTwo->id)?->status)->toBe(QueueJobStatus::finished);
 });
 
 it('clears forgotten jobs with status running', function () {
@@ -130,7 +126,9 @@ it('tells you how many processes are currently running', function () {
     // The startWaitingJob() method is not responsible for obeying the limit.
     expect($queue->runningProcessesCount())->toBe(3);
 
-    usleep(200000);
+    helper_tryUntil(function () use ($queue) {
+        return $queue->runningProcessesCount() === 0;
+    });
 
     expect($queue->runningProcessesCount())->toBe(0);
 });
