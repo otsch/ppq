@@ -61,13 +61,15 @@ class Process
         $process = self::runCommand('ps ax | grep php');
 
         if ($process->isSuccessful() && self::processOutputContainsStrings($process, $strings)) {
-            var_dump('ps command works');
+            var_dump('own pid: ' . $ownPid);
 
             foreach (explode(PHP_EOL, $process->getOutput()) as $outputLine) {
                 if (
                     self::stringContainsStrings($outputLine, $strings) &&
                     !self::stringContainsStrings($outputLine, (string) $ownPid)
                 ) {
+                    var_dump('found process: ' . $outputLine);
+
                     return true;
                 }
             }
@@ -160,8 +162,6 @@ class Process
         string|array $strings,
         int $ownPid,
     ): bool {
-        var_dump('check with /proc/ dir');
-
         $process = self::runCommand('cd /proc && ls');
 
         if ($process->isSuccessful()) {
@@ -179,8 +179,6 @@ class Process
                 $process = self::runCommand('cat /proc/' . $pid . '/cmdline');
 
                 if ($process->isSuccessful() && self::processOutputContainsStrings($process, $strings)) {
-                    var_dump('found: ' . $process->getOutput() . ' - containing strings');
-
                     return true;
                 }
             }
