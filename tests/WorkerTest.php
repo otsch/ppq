@@ -23,6 +23,18 @@ class WorkerProcess
             self::$process->start();
 
             usleep(50000);
+
+            if (!self::$process->isRunning()) {
+                if (self::$process->isSuccessful()) {
+                    throw new Exception(
+                        'Looks like worker process immediately stopped. Output: ' . self::$process->getOutput()
+                    );
+                } else {
+                    throw new Exception(
+                        'Looks like worker process immediately died. Error output: ' . self::$process->getErrorOutput()
+                    );
+                }
+            }
         }
     }
 
@@ -71,7 +83,9 @@ it('processes queue jobs', function () {
         return $updatedJob->status === QueueJobStatus::finished ? $updatedJob : false;
     });
 
-    expect($finishedJob->status)->toBe(QueueJobStatus::finished); // @phpstan-ignore-line
+    expect($finishedJob)->toBeInstanceOf(QueueRecord::class);
+
+    expect($finishedJob->status)->toBe(QueueJobStatus::finished);
 });
 
 it('removes done (finished, failed, lost) jobs that exceed the configured limit of jobs to keep', function () {
