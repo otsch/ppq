@@ -211,10 +211,24 @@ class Process
         }
 
         if ($pid === $ownPid - 1 || $pid === $ownPid + 1) {
+            var_dump('one off');
+
             if (self::stringContainsStrings($outputLine, $strings)) {
+                var_dump('contains search strings');
+
                 $process = self::runCommand('ps -q ' . $ownPid);
 
+                var_dump($process->isSuccessful());
+
+                if ($process->isSuccessful()) {
+                    var_dump($process->getOutput());
+
+                    var_dump(self::processOutputContainsStrings($process, $strings));
+                }
+
                 return $process->isSuccessful() && self::processOutputContainsStrings($process, $strings);
+            } else {
+                var_dump('doesnt contain search strings');
             }
         }
 
