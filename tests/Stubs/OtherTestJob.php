@@ -8,6 +8,6 @@ class OtherTestJob implements QueueableJob
 {
     public function invoke(): void
     {
-        echo "Successfully the OtherTestJob";
+        echo "Successfully finished the OtherTestJob";
     }
 }
