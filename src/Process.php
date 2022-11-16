@@ -74,9 +74,6 @@ class Process
                     self::stringContainsStrings($outputLine, $strings) &&
                     !self::isOwnPidOrOneOffDuplicate($pid, $outputLine, $strings, $ownPid, $processOutput)
                 ) {
-                    var_dump('found process: ' . $outputLine);
-                    var_dump('own pid: ' . $ownPid . ', process pid: ' . $pid);
-
                     return true;
                 }
             }
@@ -214,28 +211,16 @@ class Process
         }
 
         if ($pid === $ownPid - 1 || $pid === $ownPid + 1) {
-            var_dump('one off');
-
             if (self::stringContainsStrings($outputLine, $strings)) {
-                var_dump('contains search strings');
-
                 $ownProcess = self::findOwnProcessInPsCommandOutput($psCommandOutput, $ownPid);
 
                 if (!$ownProcess) {
-                    var_dump('own process not found');
-
                     // Can't find command of own process, but it's very likely that the process in question is a
                     // duplicate. Returning false here can have worse consequences than falsely returning true.
                     return true;
                 }
 
-                var_dump('own process: ' . $ownProcess);
-
-                var_dump(self::stringContainsStrings($ownProcess, $strings));
-
                 return self::stringContainsStrings($ownProcess, $strings);
-            } else {
-                var_dump('doesnt contain search strings');
             }
         }
 

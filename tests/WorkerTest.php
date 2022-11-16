@@ -83,10 +83,6 @@ it('processes queue jobs', function () {
         return $updatedJob->status === QueueJobStatus::finished ? $updatedJob : false;
     });
 
-    if (!$finishedJob instanceof QueueRecord) {
-        var_dump(WorkerProcess::$process?->getOutput());
-    }
-
     expect($finishedJob)->toBeInstanceOf(QueueRecord::class);
 
     expect($finishedJob->status)->toBe(QueueJobStatus::finished);
@@ -144,8 +140,6 @@ it('stops working the queues when it receives the stop signal', function () {
     helper_tryUntil(function () {
         return \Otsch\Ppq\Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']) === false;
     });
-
-    var_dump(Config::getDriver()->get($job->id)?->status);
 
     expect(Config::getDriver()->get($job->id)?->status)->toBe(QueueJobStatus::finished);
 
