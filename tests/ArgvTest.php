@@ -20,6 +20,32 @@ test('stopQueues() returns true when the second argv array element is "stop"', f
     [true, ['vendor/bin/ppq', 'stop', 'foo']],
 ]);
 
+test('clearQueue() returns true when the second argv array element is "clear"', function (bool $expect, array $argv) {
+    expect(Argv::make($argv)->clearQueue())->toBe($expect);
+})->with([
+    [true, ['vendor/bin/ppq', 'clear']],
+    [false, ['vendor/bin/ppq', 'foo']],
+    [false, ['vendor/bin/ppq', 'foo', 'clear']],
+    [true, ['vendor/bin/ppq', 'clear', 'foo']],
+]);
+
+test('clearAllQueues() returns true when the second argv array element is "clear-all"', function (bool $expect, array $argv) {
+    expect(Argv::make($argv)->clearAllQueues())->toBe($expect);
+})->with([
+    [true, ['vendor/bin/ppq', 'clear-all']],
+    [false, ['vendor/bin/ppq', 'foo']],
+    [false, ['vendor/bin/ppq', 'foo', 'clear-all']],
+    [true, ['vendor/bin/ppq', 'clear-all', 'foo']],
+]);
+
+test('it gets the queue to clear from the third argv argument', function (array $argv, string $queueName) {
+    expect(Argv::make($argv)->queueToClear())->toBe($queueName);
+})->with([
+    [['vendor/bin/ppq', 'clear', 'default'], 'default'],
+    [['vendor/bin/ppq', 'clear', '*'], '*'],
+    [['vendor/bin/ppq', 'clear', 'foo', 'bar'], 'foo'],
+]);
+
 test('runJob() returns true when the second argv array element is "run"', function (bool $expect, array $argv) {
     expect(Argv::make($argv)->runJob())->toBe($expect);
 })->with([

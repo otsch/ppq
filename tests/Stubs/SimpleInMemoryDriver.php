@@ -4,6 +4,7 @@ namespace Stubs;
 
 use Otsch\Ppq\Drivers\AbstractQueueDriver;
 use Otsch\Ppq\Entities\QueueRecord;
+use Otsch\Ppq\Entities\Values\QueueJobStatus;
 
 class SimpleInMemoryDriver extends AbstractQueueDriver
 {
@@ -47,5 +48,16 @@ class SimpleInMemoryDriver extends AbstractQueueDriver
     protected function getQueue(string $queue): array
     {
         return $this->queue[$queue] ?? [];
+    }
+
+    public function clear(string $queue): void
+    {
+        if (isset($this->queue[$queue])) {
+            foreach ($this->queue[$queue] as $id => $queueRecord) {
+                if ($queueRecord->status === QueueJobStatus::waiting) {
+                    unset($this->queue[$queue][$id]);
+                }
+            }
+        }
     }
 }

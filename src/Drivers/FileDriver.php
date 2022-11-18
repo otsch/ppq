@@ -5,6 +5,7 @@ namespace Otsch\Ppq\Drivers;
 use Exception;
 use Otsch\Ppq\Config;
 use Otsch\Ppq\Entities\QueueRecord;
+use Otsch\Ppq\Entities\Values\QueueJobStatus;
 
 class FileDriver extends AbstractQueueDriver
 {
@@ -95,9 +96,34 @@ class FileDriver extends AbstractQueueDriver
 
         $queueFileHandle = $this->openAndLockQueueFile($queue);
 
-        $this->forgetFromQueue($queue, $id, $queueFileHandle, );
+        $this->forgetFromQueue($queue, $id, $queueFileHandle);
 
         unset($index[$id]);
+
+        $this->saveIndex($index, $indexFileHandle);
+
+        $this->releaseLockAndCloseHandle($queueFileHandle);
+
+        $this->releaseLockAndCloseHandle($indexFileHandle);
+    }
+
+    public function clear(string $queue): void
+    {
+        [$queueFileHandle, $indexFileHandle] = $this->openAndLockQueueAndIndexFiles($queue);
+
+        $index = $this->getIndex($indexFileHandle);
+
+        $queue = $this->getQueue($queue, $queueFileHandle);
+
+        foreach ($queue as $id => $queueRecord) {
+            if ($queueRecord->status === QueueJobStatus::waiting) {
+                unset($queue[$id]);
+
+                unset($index[$id]);
+            }
+        }
+
+        $this->saveQueue($queue, $queueFileHandle);
 
         $this->saveIndex($index, $indexFileHandle);
 

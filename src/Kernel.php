@@ -23,7 +23,7 @@ class Kernel
         array $argv,
         protected Worker $worker = new Worker(),
         protected Signal $signal = new Signal(),
-        protected Lister $lister = new Lister(),
+        protected ListCommand $listCommand = new ListCommand(),
         protected Fail $fail = new Fail(),
     ) {
         $this->argv = Argv::make($argv);
@@ -63,7 +63,11 @@ class Kernel
         } elseif ($this->argv->checkSchedule()) {
             $this->checkSchedule();
         } elseif ($this->argv->list()) {
-            $this->lister->list();
+            $this->listCommand->list();
+        } elseif ($this->argv->clearQueue()) {
+            $this->clearQueue();
+        } elseif ($this->argv->clearAllQueues()) {
+            $this->clearAllQueues();
         }
     }
 
@@ -138,6 +142,34 @@ class Kernel
 
             $scheduler->checkScheduleAndQueue();
         }
+    }
+
+    protected function clearQueue(): void
+    {
+        $queueToClear = $this->argv->queueToClear();
+
+        if (!$queueToClear) {
+            $this->logger->error('You must define which queue you want to clear. Use * to clear all queues.');
+
+            return;
+        }
+
+        if (!in_array($queueToClear, Config::getQueueNames(), true)) {
+            $this->logger->error('You must define which queue you want to clear. Use clear-all to clear all queues.');
+
+            return;
+        }
+
+        Ppq::clear($queueToClear);
+
+        $this->logger->info('Cleared queue ' . $queueToClear);
+    }
+
+    protected function clearAllQueues(): void
+    {
+        Ppq::clearAll();
+
+        $this->logger->info('Cleared all queues');
     }
 
     protected function getJobByIdOrFail(): ?QueueRecord

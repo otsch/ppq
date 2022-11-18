@@ -29,6 +29,21 @@ class Argv
         return isset($this->argv[1]) && $this->argv[1] === 'stop';
     }
 
+    public function clearQueue(): bool
+    {
+        return isset($this->argv[1]) && $this->argv[1] === 'clear';
+    }
+
+    public function clearAllQueues(): bool
+    {
+        return isset($this->argv[1]) && $this->argv[1] === 'clear-all';
+    }
+
+    public function queueToClear(): ?string
+    {
+        return $this->argv[2] ?? null;
+    }
+
     public function runJob(): bool
     {
         return isset($this->argv[1]) && $this->argv[1] === 'run';

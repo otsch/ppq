@@ -71,6 +71,18 @@ class Config
         return $queues;
     }
 
+    /**
+     * @return string[]
+     */
+    public static function getQueueNames(): array
+    {
+        $queues = self::get('queues') ?? [];
+
+        /** @var array<string, mixed[]> $queues */
+
+        return array_keys($queues);
+    }
+
     public static function get(string $key = ''): mixed
     {
         $data = self::getConfigData();

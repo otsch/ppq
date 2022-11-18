@@ -52,6 +52,10 @@ function helper_cleanUpDataPathQueueFiles(): void
     if (file_exists(__DIR__ . '/_testdata/datapath/queue-other_queue')) {
         file_put_contents(__DIR__ . '/_testdata/datapath/queue-other_queue', 'a:0:{}');
     }
+
+    if (file_exists(__DIR__ . '/_testdata/datapath/queue-infinite_waiting_jobs_queue')) {
+        file_put_contents(__DIR__ . '/_testdata/datapath/queue-infinite_waiting_jobs_queue', 'a:0:{}');
+    }
 }
 
 function helper_tryUntil(Closure $callback, mixed $arg = null, int $maxTries = 100, int $sleep = 10000): mixed
