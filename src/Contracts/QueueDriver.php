@@ -29,4 +29,9 @@ interface QueueDriver
         ?array $args = null,
         ?int $pid = null,
     ): array;
+
+    /**
+     * Remove all QueueRecords of status waiting from a certain queue.
+     */
+    public function clear(string $queue): void;
 }

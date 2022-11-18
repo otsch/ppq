@@ -4,7 +4,7 @@ use Otsch\Ppq\Config;
 use Otsch\Ppq\Entities\QueueRecord;
 use Otsch\Ppq\Fail;
 use Otsch\Ppq\Kernel;
-use Otsch\Ppq\Lister;
+use Otsch\Ppq\ListCommand;
 use Otsch\Ppq\Signal;
 use Otsch\Ppq\Worker;
 use PHPUnit\Framework\TestCase;
@@ -124,12 +124,12 @@ it('checks the scheduler', function () {
     expect($this->getActualOutput())->toContain('Schedule checked');
 });
 
-it('calls Lister::list() when argv\'s first argument is list and run() is called', function () {
-    $listerMock = Mockery::mock(Lister::class);
+it('calls ListCommand::list() when argv\'s first argument is list and run() is called', function () {
+    $listCommandMock = Mockery::mock(ListCommand::class);
 
-    $listerMock->shouldReceive('list')->once(); // @phpstan-ignore-line
+    $listCommandMock->shouldReceive('list')->once(); // @phpstan-ignore-line
 
-    $kernel = new Kernel(['vendor/bin/ppq', 'list'], lister: $listerMock); // @phpstan-ignore-line
+    $kernel = new Kernel(['vendor/bin/ppq', 'list'], listCommand: $listCommandMock); // @phpstan-ignore-line
 
     $kernel->run();
 });

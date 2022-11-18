@@ -3,7 +3,7 @@
 use Otsch\Ppq\Config;
 use Otsch\Ppq\Entities\QueueRecord;
 use Otsch\Ppq\Entities\Values\QueueJobStatus;
-use Otsch\Ppq\Lister;
+use Otsch\Ppq\ListCommand;
 use PHPUnit\Framework\TestCase;
 use Stubs\TestJob;
 
@@ -31,9 +31,9 @@ it('lists all the waiting and running jobs in all queues', function () {
 
     $driver->add(new QueueRecord('other_queue', TestJob::class, args: ['eight' => 8]));
 
-    $lister = new Lister();
+    $listCommand = new ListCommand();
 
-    $lister->list();
+    $listCommand->list();
 
     $cliOutput = $this->getActualOutput();
 

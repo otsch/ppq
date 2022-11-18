@@ -7,6 +7,14 @@ use Otsch\Ppq\Entities\Values\QueueJobStatus;
 
 class Ppq
 {
+    /**
+     * @return string[]
+     */
+    public static function queueNames(): array
+    {
+        return Config::getQueueNames();
+    }
+
     public static function find(string $id): ?QueueRecord
     {
         return Config::getDriver()->get($id);
@@ -20,6 +28,20 @@ class Ppq
             $queueRecord->status = QueueJobStatus::cancelled;
 
             Config::getDriver()->update($queueRecord);
+        }
+    }
+
+    public static function clear(string $queueName): void
+    {
+        if (in_array($queueName, self::queueNames(), true)) {
+            Config::getDriver()->clear($queueName);
+        }
+    }
+
+    public static function clearAll(): void
+    {
+        foreach (self::queueNames() as $queueName) {
+            Config::getDriver()->clear($queueName);
         }
     }
 

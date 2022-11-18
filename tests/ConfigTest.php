@@ -3,6 +3,7 @@
 use Otsch\Ppq\Config;
 use Otsch\Ppq\Drivers\FileDriver;
 use Otsch\Ppq\Exceptions\InvalidQueueDriverException;
+use Otsch\Ppq\Queue;
 use Stubs\Scheduler;
 use Stubs\SimpleInMemoryDriver;
 
@@ -30,7 +31,7 @@ test('you can get the config path using the getPath() method', function () {
     expect(Config::getPath())->toBe('/var/www/project/config/yolo.php');
 });
 
-test('the driver method returns a FileDriver if no other driver ist configured', function () {
+test('the driver method returns a FileDriver if no other driver is configured', function () {
     Config::setPath(helper_configFilePath());
 
     expect(Config::getDriver())->toBeInstanceOf(FileDriver::class);
@@ -47,6 +48,24 @@ it('throws an Exception when the configured driver does not implement the QueueD
 
     Config::getDriver();
 })->throws(InvalidQueueDriverException::class);
+
+it('gets the configured queues as Queue object instances', function () {
+    Config::setPath(helper_configFilePath('filesystem-ppq.php'));
+
+    $queues = Config::getQueues();
+
+    foreach ($queues as $queue) {
+        expect($queue)->toBeInstanceOf(Queue::class);
+
+        expect($queue->name)->toBeIn(['default', 'other_queue', 'infinite_waiting_jobs_queue']);
+    }
+});
+
+it('gets the names of all configured queues', function () {
+    Config::setPath(helper_configFilePath('filesystem-ppq.php'));
+
+    expect(Config::getQueueNames())->toBe(['default', 'other_queue', 'infinite_waiting_jobs_queue']);
+});
 
 test('the all() method returns the whole config', function () {
     Config::setPath(helper_configFilePath('ppq.php'));

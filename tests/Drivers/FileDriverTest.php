@@ -180,3 +180,19 @@ it('finds all jobs from a queue with a certain pid', function () {
 
     expect($driver->where('default', status: null, pid: 123))->toHaveCount(2);
 });
+
+it('clears a queue', function () {
+    $driver = new FileDriver();
+
+    $driver->add(new QueueRecord('other_queue', TestJob::class));
+
+    $driver->add(new QueueRecord('other_queue', TestJob::class));
+
+    $driver->add(new QueueRecord('other_queue', TestJob::class));
+
+    expect($driver->where('other_queue', status: QueueJobStatus::waiting))->toHaveCount(3);
+
+    $driver->clear('other_queue');
+
+    expect($driver->where('other_queue', status: QueueJobStatus::waiting))->toHaveCount(0);
+});
