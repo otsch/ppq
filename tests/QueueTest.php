@@ -3,6 +3,7 @@
 use Otsch\Ppq\Config;
 use Otsch\Ppq\Entities\QueueRecord;
 use Otsch\Ppq\Entities\Values\QueueJobStatus;
+use Otsch\Ppq\Ppq;
 use Otsch\Ppq\Process;
 use Otsch\Ppq\Queue;
 use Stubs\TestJob;
@@ -27,8 +28,6 @@ function helper_addQueueJob(string $queue = 'default', ?QueueRecord $job = null)
 it('starts a waiting job', function () {
     $job = helper_addQueueJob();
 
-    Config::getDriver()->add($job);
-
     $queue = new Queue('default', 2, 10);
 
     $queue->startWaitingJob($job);
@@ -47,7 +46,7 @@ it('starts a waiting job', function () {
 
     expect($queue->hasAvailableSlot())->toBeTrue();
 
-    expect($job->status)->toBe(QueueJobStatus::finished);
+    expect(Ppq::find($job->id)?->status)->toBe(QueueJobStatus::finished);
 });
 
 it('knows if there is a slot available for another job', function () {
@@ -81,9 +80,9 @@ it('knows if there is a slot available for another job', function () {
         return $queue->runningProcessesCount() === 0;
     });
 
-    expect(Config::getDriver()->get($jobOne->id)?->status)->toBe(QueueJobStatus::finished);
+    expect(Ppq::find($jobOne->id)?->status)->toBe(QueueJobStatus::finished);
 
-    expect(Config::getDriver()->get($jobTwo->id)?->status)->toBe(QueueJobStatus::finished);
+    expect(Ppq::find($jobTwo->id)?->status)->toBe(QueueJobStatus::finished);
 });
 
 it('clears forgotten jobs with status running', function () {
@@ -91,13 +90,13 @@ it('clears forgotten jobs with status running', function () {
 
     $runningJob = helper_addQueueJob(job: new QueueRecord('default', TestJob::class, QueueJobStatus::running));
 
-    expect(Config::getDriver()->where('default', status: QueueJobStatus::running))->toHaveCount(1);
+    expect(Ppq::running('default'))->toHaveCount(1);
 
     $queue->clearRunningJobs();
 
-    expect(Config::getDriver()->where('default', status: QueueJobStatus::running))->toBeEmpty();
+    expect(Ppq::running('default'))->toBeEmpty();
 
-    $clearedJob = Config::getDriver()->get($runningJob->id);
+    $clearedJob = Ppq::find($runningJob->id);
 
     expect($clearedJob->status)->toBe(QueueJobStatus::lost); // @phpstan-ignore-line
 });

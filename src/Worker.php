@@ -90,6 +90,8 @@ class Worker
      */
     private function checkQueues(): void
     {
+        $this->cancelCancelledRunningJobs();
+
         $this->startWaitingJobs();
 
         $this->clearRunningJobs();
@@ -109,6 +111,13 @@ class Worker
         }
 
         return $count;
+    }
+
+    private function cancelCancelledRunningJobs(): void
+    {
+        foreach ($this->queues() as $queue) {
+            $queue->cancelCancelledRunningJobs();
+        }
     }
 
     /**

@@ -18,5 +18,8 @@ return [
             'concurrent_jobs' => 3,
             'keep_last_x_past_jobs' => 10,
         ],
+        'infinite_waiting_jobs_queue' => [
+            'concurrent_jobs' => 0,
+        ],
     ],
 ];

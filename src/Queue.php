@@ -38,13 +38,16 @@ class Queue
      */
     public function startWaitingJob(QueueRecord $waitingJob): void
     {
-        $process = Kernel::ppqCommand('run-job ' . $waitingJob->id);
+        $process = Kernel::ppqCommand('run ' . $waitingJob->id);
 
         $process->start();
 
         $pid = $process->getPid();
 
-        $this->logger->info('Started job with id ' . $waitingJob->id);
+        $this->logger->info(
+            'Started job: class ' . $waitingJob->jobClass . ', args ' . $this->printArgs($waitingJob->args) . ', id ' .
+            $waitingJob->id
+        );
 
         $waitingJob->status = QueueJobStatus::running;
 
@@ -53,6 +56,19 @@ class Queue
         Config::getDriver()->update($waitingJob);
 
         $this->processes[$pid] = new Process($waitingJob, $process);
+    }
+
+    public function cancelCancelledRunningJobs(): void
+    {
+        foreach ($this->processes as $pid => $process) {
+            $updatedQueueRecord = Ppq::find($process->queueRecord->id);
+
+            if ($updatedQueueRecord?->status === QueueJobStatus::cancelled) {
+                $process->cancel();
+
+                unset($this->processes[$pid]);
+            }
+        }
     }
 
     /**
@@ -81,15 +97,13 @@ class Queue
      * @return QueueRecord[]
      * @throws InvalidQueueDriverException
      */
-    private function getForgottenRunningJobs(): array
+    protected function getForgottenRunningJobs(): array
     {
         $runningPids = $this->getKnownRunningPids();
 
-        $runningJobs = Config::getDriver()->where($this->name, status: QueueJobStatus::running);
-
         $filtered = [];
 
-        foreach ($runningJobs as $runningJob) {
+        foreach (Ppq::running($this->name) as $runningJob) {
             if (!in_array($runningJob->pid, $runningPids, true)) {
                 $filtered[] = $runningJob;
             }
@@ -101,7 +115,7 @@ class Queue
     /**
      * @return array<int|string, int|string>
      */
-    private function getKnownRunningPids(): array
+    protected function getKnownRunningPids(): array
     {
         $pids = [];
 
@@ -121,7 +135,7 @@ class Queue
     /**
      * @throws InvalidQueueDriverException
      */
-    private function finishForgottenJob(QueueRecord $queueJob): void
+    protected function finishForgottenJob(QueueRecord $queueJob): void
     {
         $queueJob->status = QueueJobStatus::lost;
 
@@ -132,12 +146,26 @@ class Queue
         $this->logger->warning('Updated status of lost job with id ' . $queueJob->id);
     }
 
-    private function isJobStillRunning(QueueRecord $queueJob): bool
+    protected function isJobStillRunning(QueueRecord $queueJob): bool
     {
         if (!$queueJob->pid) {
             return false;
         }
 
         return Process::runningPhpProcessWithPidExists($queueJob->pid);
+    }
+
+    /**
+     * @param mixed[] $args
+     */
+    protected function printArgs(array $args): string
+    {
+        $argsString = trim(str_replace(PHP_EOL, '', var_export($args, true)));
+
+        if (str_starts_with($argsString, 'array (') && str_ends_with($argsString, ')')) {
+            $argsString = '[' . trim(substr($argsString, 7, -1)) . ']';
+        }
+
+        return $argsString;
     }
 }

@@ -1,6 +1,5 @@
 <?php
 
-use Mockery\Mock;
 use Otsch\Ppq\Config;
 use Otsch\Ppq\Entities\QueueRecord;
 use Otsch\Ppq\Fail;
@@ -24,17 +23,17 @@ it('returns an existing ppqPath', function () {
 });
 
 it('returns a Symfony Process instance to run a ppq command containing the full ppqPath', function () {
-    $process = Kernel::ppqCommand('run-job 123');
+    $process = Kernel::ppqCommand('run 123');
 
     expect($process->getCommandLine())->toContain(Kernel::ppqPath());
 
-    expect($process->getCommandLine())->toContain('run-job 123');
+    expect($process->getCommandLine())->toContain('run 123');
 
     expect($process->getCommandLine())->toStartWith('php');
 });
 
 it('appends the set config path as --c option to the ppq command', function () {
-    $process = Kernel::ppqCommand('run-job 123');
+    $process = Kernel::ppqCommand('run 123');
 
     expect($process->getCommandLine())->toEndWith('--c=' . Config::getPath());
 });
@@ -64,7 +63,7 @@ it('runs a job', function () {
 
     Config::getDriver()->add($queueJob);
 
-    $kernel = new Kernel(['vendor/bin/ppq', 'run-job', $queueJob->id]);
+    $kernel = new Kernel(['vendor/bin/ppq', 'run', $queueJob->id]);
 
     $kernel->run();
 
@@ -76,7 +75,7 @@ it('throws an Exception when there is no job ID in the argv arguments', function
 
     Config::getDriver()->add($queueJob);
 
-    $kernel = new Kernel(['vendor/bin/ppq', 'run-job']);
+    $kernel = new Kernel(['vendor/bin/ppq', 'run']);
 
     $kernel->run();
 })->throws(Exception::class);
@@ -84,11 +83,11 @@ it('throws an Exception when there is no job ID in the argv arguments', function
 it('fails when the job ID to run is not on the queue', function () {
     $failMock = Mockery::mock(Fail::class);
 
-    $failMock->shouldReceive('withMessage')->once(); // @phpstan-ignore-line
+    $failMock->shouldReceive('withMessage')->twice(); // @phpstan-ignore-line
 
     $queueJob = new QueueRecord('default', TestJob::class);
 
-    $kernel = new Kernel(['vendor/bin/ppq', 'run-job', $queueJob->id], fail: $failMock); // @phpstan-ignore-line
+    $kernel = new Kernel(['vendor/bin/ppq', 'run', $queueJob->id], fail: $failMock); // @phpstan-ignore-line
 
     $kernel->run();
 });
@@ -102,7 +101,7 @@ it('fails when the job class to run does not implement the QueueableJob interfac
 
     Config::getDriver()->add($queueJob);
 
-    $kernel = new Kernel(['vendor/bin/ppq', 'run-job', $queueJob->id], fail: $failMock); // @phpstan-ignore-line
+    $kernel = new Kernel(['vendor/bin/ppq', 'run', $queueJob->id], fail: $failMock); // @phpstan-ignore-line
 
     $kernel->run();
 });

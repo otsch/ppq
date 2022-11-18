@@ -31,7 +31,12 @@ class Argv
 
     public function runJob(): bool
     {
-        return isset($this->argv[1]) && $this->argv[1] === 'run-job';
+        return isset($this->argv[1]) && $this->argv[1] === 'run';
+    }
+
+    public function cancelJob(): bool
+    {
+        return isset($this->argv[1]) && $this->argv[1] === 'cancel';
     }
 
     public function checkSchedule(): bool

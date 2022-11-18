@@ -86,11 +86,41 @@ class Process
         return false;
     }
 
+    public function cancel(): void
+    {
+        if ($this->process->isRunning()) {
+            $this->process->stop();
+
+            $this->logger->warning(
+                'Cancelled running job ' . $this->queueRecord->id . ' (class ' . $this->queueRecord->jobClass .
+                ', args ' . $this->printArgs($this->queueRecord->args) . ')'
+            );
+
+            $this->reloadQueueRecord();
+
+            $this->queueRecord->status = QueueJobStatus::cancelled;
+        } else {
+            $this->logger->info(
+                'Job ' . $this->queueRecord->id . ' should have been cancelled, but it looks like it already finished.'
+            );
+
+            $this->reloadQueueRecord();
+
+            $this->queueRecord->status = QueueJobStatus::finished;
+        }
+
+        $this->queueRecord->pid = null;
+
+        Config::getDriver()->update($this->queueRecord);
+    }
+
     public function finish(): void
     {
         if ($this->process->isRunning()) {
             $this->process->stop();
         }
+
+        $this->reloadQueueRecord();
 
         if ($this->process->isSuccessful()) {
             $this->queueRecord->status = $status = QueueJobStatus::finished;
@@ -278,5 +308,28 @@ class Process
         }
 
         return (int) $splitAtSpace[0];
+    }
+
+    protected function reloadQueueRecord(): void
+    {
+        $updatedQueueRecord = Ppq::find($this->queueRecord->id);
+
+        if ($updatedQueueRecord) {
+            $this->queueRecord = $updatedQueueRecord;
+        }
+    }
+
+    /**
+     * @param mixed[] $args
+     */
+    protected function printArgs(array $args): string
+    {
+        $argsString = trim(str_replace(PHP_EOL, '', var_export($args, true)));
+
+        if (str_starts_with($argsString, 'array (') && str_ends_with($argsString, ')')) {
+            $argsString = '[' . trim(substr($argsString, 7, -1)) . ']';
+        }
+
+        return $argsString;
     }
 }

@@ -66,3 +66,25 @@ function helper_tryUntil(Closure $callback, mixed $arg = null, int $maxTries = 1
 
     return $callbackReturnValue;
 }
+
+/**
+ * @param string[] $contains
+ */
+function helper_containsInOneLine(string $string, array $contains): bool
+{
+    foreach (explode(PHP_EOL, $string) as $line) {
+        if (empty($line)) {
+            continue;
+        }
+
+        foreach ($contains as $containsElement) {
+            if (!str_contains($line, $containsElement)) {
+                continue 2;
+            }
+        }
+
+        return true;
+    }
+
+    return false;
+};

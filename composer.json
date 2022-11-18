@@ -31,7 +31,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Stubs\\": "tests/Stubs"
+            "Stubs\\": "tests/Stubs",
+            "Integration\\": "tests/_integration"
         }
     },
     "require": {

@@ -5,11 +5,16 @@ namespace Otsch\Ppq;
 use Exception;
 use Otsch\Ppq\Contracts\QueueableJob;
 use Otsch\Ppq\Contracts\Scheduler;
+use Otsch\Ppq\Entities\QueueRecord;
+use Otsch\Ppq\Loggers\EchoLogger;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Process\Process as SymfonyProcess;
 
 class Kernel
 {
     protected readonly Argv $argv;
+
+    protected readonly LoggerInterface $logger;
 
     /**
      * @param string[] $argv
@@ -22,6 +27,8 @@ class Kernel
         protected Fail $fail = new Fail(),
     ) {
         $this->argv = Argv::make($argv);
+
+        $this->logger = new EchoLogger();
     }
 
     public static function ppqCommand(string $command): SymfonyProcess
@@ -49,6 +56,8 @@ class Kernel
             $this->worker->workQueues();
         } elseif ($this->argv->runJob()) {
             $this->runJob();
+        } elseif ($this->argv->cancelJob()) {
+            $this->cancelJob();
         } elseif ($this->argv->stopQueues()) {
             $this->signal->setStop();
         } elseif ($this->argv->checkSchedule()) {
@@ -81,29 +90,32 @@ class Kernel
      */
     protected function runJob(): void
     {
-        if (!$this->argv->jobId()) {
-            throw new Exception('No or invalid job id.');
-        }
+        $job = $this->getJobByIdOrFail();
 
-        $job = Config::getDriver()->get($this->argv->jobId());
+        /** @var QueueRecord $job */
 
-        if (!$job) {
-            $this->fail->withMessage('Job with id ' . $this->argv->jobId() . ' not found');
-        } else {
-            try {
-                $job = new $job->jobClass(...$job->args);
+        try {
+            $job = new $job->jobClass(...$job->args);
 
-                if (!$job instanceof QueueableJob) {
-                    throw new Exception(
-                        'Can\'t run job because it\'s not an implementation of the QueueableJob interface.'
-                    );
-                }
-
-                $job->invoke();
-            } catch (Exception $exception) {
-                $this->fail->withMessage($exception->getMessage());
+            if (!$job instanceof QueueableJob) {
+                throw new Exception(
+                    'Can\'t run job because it\'s not an implementation of the QueueableJob interface.'
+                );
             }
+
+            $job->invoke();
+        } catch (Exception $exception) {
+            $this->fail->withMessage($exception->getMessage());
         }
+    }
+
+    protected function cancelJob(): void
+    {
+        $job = $this->getJobByIdOrFail();
+
+        /** @var QueueRecord $job */
+
+        Ppq::cancel($job->id);
     }
 
     /**
@@ -126,5 +138,20 @@ class Kernel
 
             $scheduler->checkScheduleAndQueue();
         }
+    }
+
+    protected function getJobByIdOrFail(): ?QueueRecord
+    {
+        if (!$this->argv->jobId()) {
+            throw new Exception('No or invalid job id.');
+        }
+
+        $job = Ppq::find($this->argv->jobId());
+
+        if ($job === null) {
+            $this->fail->withMessage('Job with id ' . $this->argv->jobId() . ' not found');
+        }
+
+        return $job;
     }
 }

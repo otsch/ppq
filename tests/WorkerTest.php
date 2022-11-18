@@ -1,52 +1,13 @@
 <?php
 
+use Integration\WorkerProcess;
 use Otsch\Ppq\Config;
 use Otsch\Ppq\Entities\QueueRecord;
 use Otsch\Ppq\Entities\Values\QueueJobStatus;
 use Otsch\Ppq\Kernel;
+use Otsch\Ppq\Ppq;
+use Otsch\Ppq\Process;
 use Stubs\TestJob;
-use Symfony\Component\Process\Process;
-
-class WorkerProcess
-{
-    public static ?Process $process = null;
-
-    public static function work(): void
-    {
-        if (self::$process && !self::$process->isRunning()) {
-            self::stop();
-        }
-
-        if (!self::$process) {
-            self::$process = Kernel::ppqCommand('work');
-
-            self::$process->start();
-
-            usleep(50000);
-
-            if (!self::$process->isRunning()) {
-                if (self::$process->isSuccessful()) {
-                    throw new Exception(
-                        'Looks like worker process immediately stopped. Output: ' . self::$process->getOutput()
-                    );
-                } else {
-                    throw new Exception(
-                        'Looks like worker process immediately died. Error output: ' . self::$process->getErrorOutput()
-                    );
-                }
-            }
-        }
-    }
-
-    public static function stop(): void
-    {
-        if (self::$process) {
-            self::$process->stop();
-
-            self::$process = null;
-        }
-    }
-}
 
 beforeEach(function () {
     Config::setPath(__DIR__ . '/_testdata/config/filesystem-ppq.php');
@@ -67,7 +28,7 @@ afterAll(function () {
 });
 
 it('processes queue jobs', function () {
-    expect(\Otsch\Ppq\Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']))->toBeTrue();
+    expect(Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']))->toBeTrue();
 
     $job = new QueueRecord('default', TestJob::class);
 
@@ -89,7 +50,7 @@ it('processes queue jobs', function () {
 });
 
 it('removes done (finished, failed, lost) jobs that exceed the configured limit of jobs to keep', function () {
-    expect(\Otsch\Ppq\Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']))->toBeTrue();
+    expect(Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']))->toBeTrue();
 
     Config::getDriver()->add(new QueueRecord('default', TestJob::class, QueueJobStatus::finished));
 
@@ -115,7 +76,7 @@ it('removes done (finished, failed, lost) jobs that exceed the configured limit 
 
     $doneJobsCount = 0;
 
-    foreach (Config::getDriver()->where('default', status: null) as $job) {
+    foreach (Ppq::where('default') as $job) {
         if ($job->status->isPast()) {
             $doneJobsCount++;
         }
@@ -125,7 +86,7 @@ it('removes done (finished, failed, lost) jobs that exceed the configured limit 
 });
 
 it('stops working the queues when it receives the stop signal', function () {
-    expect(\Otsch\Ppq\Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']))->toBeTrue();
+    expect(Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']))->toBeTrue();
 
     $job = new QueueRecord('default', TestJob::class);
 
@@ -138,10 +99,10 @@ it('stops working the queues when it receives the stop signal', function () {
     Kernel::ppqCommand('stop')->run();
 
     helper_tryUntil(function () {
-        return \Otsch\Ppq\Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']) === false;
+        return Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']) === false;
     });
 
     expect(Config::getDriver()->get($job->id)?->status)->toBe(QueueJobStatus::finished);
 
-    expect(\Otsch\Ppq\Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']))->toBeFalse();
+    expect(Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']))->toBeFalse();
 });
