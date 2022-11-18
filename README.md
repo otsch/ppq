@@ -130,8 +130,22 @@ Lists all the queues that you defined in your config and their currently running
 
 #### Cancel a Waiting or Running Job by its ID
 
-```php
+```bash
 php vendor/bin/ppq cancel 1a2b3c.456def
+```
+
+#### Clearing Queues
+
+If you accidentally dispatched a lot of jobs to a queue and just want to remove them, you can simply clear the queue:
+
+```bash
+php vendor/bin/ppq clear queue_name
+```
+
+You can also clear all configured queues:
+
+```bash
+php vendor/bin/ppq clear-all
 ```
 
 #### Calling the Scheduler to start due Jobs
