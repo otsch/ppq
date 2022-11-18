@@ -31,11 +31,13 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Stubs\\": "tests/Stubs"
+            "Stubs\\": "tests/Stubs",
+            "Integration\\": "tests/_integration"
         }
     },
     "require": {
-        "php": "^8.1"
+        "php": "^8.1",
+        "mockery/mockery": "^1.5"
     },
     "require-dev": {
         "pestphp/pest": "^1.22",

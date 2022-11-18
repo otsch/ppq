@@ -1,14 +1,14 @@
 <?php
 
-use Otsch\Ppq\Drivers\FileDriver;
 use Stubs\Scheduler;
+use Stubs\SimpleInMemoryDriver;
 
 return [
     'datapath' => __DIR__ . '/../datapath',
 
-    'driver' => FileDriver::class,
+    'driver' => SimpleInMemoryDriver::class,
 
-    'bootstrap_file' => null,
+    'bootstrap_file' => __DIR__ . '/../bootstrap.php',
 
     'queues' => [
         'default' => [
@@ -21,6 +21,6 @@ return [
 
     'scheduler' => [
         'class' => Scheduler::class,
-        'active' => false,
+        'active' => true,
     ],
 ];

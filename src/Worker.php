@@ -6,41 +6,28 @@ use Exception;
 use Otsch\Ppq\Entities\Values\QueueJobStatus;
 use Otsch\Ppq\Loggers\EchoLogger;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Process\Process as SymfonyProcess;
 
-class Manager
+class Worker
 {
     /**
-     * @var Queue[]
+     * @var null|Queue[]
      */
-    private array $queues = [];
+    private ?array $queues = null;
 
     private bool $stopScheduled = false;
-
-    private ?Signal $signal = null;
 
     private LoggerInterface $logger;
 
     public function __construct(
-        private readonly float $checkEveryXSeconds = 0.2,
+        protected readonly float $checkEveryXSeconds = 0.2,
+        protected Signal $signal = new Signal(),
     ) {
-        $this->buildQueuesFromConfig();
-
         $this->logger = new EchoLogger();
     }
 
-    public static function ppqCommand(string $command): SymfonyProcess
-    {
-        $command = 'php ' . self::ppqPath() . ' ' . $command;
-
-        return SymfonyProcess::fromShellCommandline($command);
-    }
-
-    public static function ppqPath(): string
-    {
-        return __DIR__ . '/../bin/ppq';
-    }
-
+    /**
+     * @throws Exception
+     */
     public function workQueues(): void
     {
         if ($this->queuesAreAlreadyWorking()) {
@@ -72,25 +59,16 @@ class Manager
         }
     }
 
-    public function list(): void
+    /**
+     * @return Queue[]
+     */
+    private function queues(): array
     {
-        $driver = Config::getDriver();
-
-        echo PHP_EOL;
-
-        foreach ($this->queues as $queue) {
-            echo "Queue: " . $queue->name . PHP_EOL;
-
-            foreach ($driver->where($queue->name, status: QueueJobStatus::running) as $queueRecord) {
-                echo 'id: ' . $queueRecord->id . ', jobClass: ' . $queueRecord->jobClass . ' - running' . PHP_EOL;
-            }
-
-            foreach ($driver->where($queue->name, status: QueueJobStatus::waiting) as $queueRecord) {
-                echo 'id: ' . $queueRecord->id . ', jobClass: ' . $queueRecord->jobClass . ' - waiting' . PHP_EOL;
-            }
-
-            echo PHP_EOL;
+        if (!$this->queues) {
+            $this->queues = Config::getQueues();
         }
+
+        return $this->queues;
     }
 
     /**
@@ -98,7 +76,7 @@ class Manager
      */
     private function checkSignals(): void
     {
-        if ($this->signal()?->isStop()) {
+        if ($this->signal->isStop()) {
             $this->scheduleStop();
 
             if ($this->runningJobs() === 0) {
@@ -107,8 +85,13 @@ class Manager
         }
     }
 
+    /**
+     * @throws Exceptions\InvalidQueueDriverException
+     */
     private function checkQueues(): void
     {
+        $this->cancelCancelledRunningJobs();
+
         $this->startWaitingJobs();
 
         $this->clearRunningJobs();
@@ -116,32 +99,30 @@ class Manager
         $this->clearDoneJobs();
     }
 
+    /**
+     * @throws Exceptions\InvalidQueueDriverException
+     */
     private function runningJobs(): int
     {
         $count = 0;
 
-        foreach ($this->queues as $queue) {
+        foreach ($this->queues() as $queue) {
             $count += $queue->runningProcessesCount();
         }
 
         return $count;
     }
 
-    private function buildQueuesFromConfig(): void
+    private function cancelCancelledRunningJobs(): void
     {
-        $queueConfigs = Config::get('queues');
-
-        if (is_array($queueConfigs)) {
-            foreach ($queueConfigs as $queueName => $queueConfig) {
-                $this->queues[$queueName] = new Queue(
-                    $queueName,
-                    $queueConfig['concurrent_jobs'] ?? 2,
-                    $queueConfig['keep_last_x_past_jobs'] ?? 100,
-                );
-            }
+        foreach ($this->queues() as $queue) {
+            $queue->cancelCancelledRunningJobs();
         }
     }
 
+    /**
+     * @throws Exceptions\InvalidQueueDriverException
+     */
     private function startWaitingJobs(): void
     {
         $driver = Config::getDriver();
@@ -159,9 +140,12 @@ class Manager
         }
     }
 
+    /**
+     * @throws Exceptions\InvalidQueueDriverException
+     */
     private function clearRunningJobs(): void
     {
-        foreach ($this->queues as $queue) {
+        foreach ($this->queues() as $queue) {
             $queue->clearRunningJobs();
         }
     }
@@ -180,7 +164,7 @@ class Manager
     {
         $this->logger->info('No more running jobs, stop running queues.');
 
-        $this->signal()?->reset();
+        $this->signal->reset();
 
         exit;
     }
@@ -192,19 +176,22 @@ class Manager
     {
         return array_map(function ($queue) {
             return $queue->name;
-        }, $this->queues);
+        }, $this->queues());
     }
 
     private function getQueue(string $name): ?Queue
     {
-        return $this->queues[$name] ?? null;
+        return $this->queues()[$name] ?? null;
     }
 
+    /**
+     * @throws Exceptions\InvalidQueueDriverException
+     */
     private function clearDoneJobs(): void
     {
         $driver = Config::getDriver();
 
-        foreach ($this->queues as $queue) {
+        foreach ($this->queues() as $queue) {
             $allQueueRecords = $driver->where($queue->name, status: null);
 
             if (count($allQueueRecords) <= $queue->keepLastXPastJobs) {
@@ -227,19 +214,6 @@ class Manager
 
     private function queuesAreAlreadyWorking(): bool
     {
-        return Process::runningProcessContainingStringsExists(['php', 'vendor/bin/ppq', 'work']);
-    }
-
-    private function signal(): ?Signal
-    {
-        if (!$this->signal) {
-            try {
-                $this->signal = new Signal();
-            } catch (Exception $exception) {
-                $this->logger->warning('Checking signals doesn\'t work: ' . $exception->getMessage());
-            }
-        }
-
-        return $this->signal;
+        return Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']);
     }
 }

@@ -16,6 +16,8 @@ enum QueueJobStatus
 
     case lost;
 
+    case cancelled;
+
     /**
      * @throws Exception
      */
@@ -27,6 +29,7 @@ enum QueueJobStatus
             'finished' => QueueJobStatus::finished,
             'failed' => QueueJobStatus::failed,
             'lost' => QueueJobStatus::lost,
+            'cancelled' => QueueJobStatus::cancelled,
             default => throw new Exception('Invalid queue job status ' . $status),
         };
     }
@@ -37,6 +40,7 @@ enum QueueJobStatus
             QueueJobStatus::finished,
             QueueJobStatus::failed,
             QueueJobStatus::lost,
+            QueueJobStatus::cancelled,
         ], true);
     }
 }

@@ -31,7 +31,12 @@ class Argv
 
     public function runJob(): bool
     {
-        return isset($this->argv[1]) && $this->argv[1] === 'run-job';
+        return isset($this->argv[1]) && $this->argv[1] === 'run';
+    }
+
+    public function cancelJob(): bool
+    {
+        return isset($this->argv[1]) && $this->argv[1] === 'cancel';
     }
 
     public function checkSchedule(): bool
@@ -47,5 +52,16 @@ class Argv
     public function jobId(): ?string
     {
         return $this->argv[2] ?? null;
+    }
+
+    public function configPath(): ?string
+    {
+        $lastArg = end($this->argv);
+
+        if (!empty($lastArg) && str_starts_with($lastArg, '--c=')) {
+            return substr($lastArg, 4);
+        }
+
+        return null;
     }
 }

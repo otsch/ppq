@@ -39,7 +39,52 @@
 |
 */
 
-//function something()
-//{
-//    // ..
-//}
+function helper_cleanUpDataPathQueueFiles(): void
+{
+    if (file_exists(__DIR__ . '/_testdata/datapath/index')) {
+        file_put_contents(__DIR__ . '/_testdata/datapath/index', 'a:0:{}');
+    }
+
+    if (file_exists(__DIR__ . '/_testdata/datapath/queue-default')) {
+        file_put_contents(__DIR__ . '/_testdata/datapath/queue-default', 'a:0:{}');
+    }
+
+    if (file_exists(__DIR__ . '/_testdata/datapath/queue-other_queue')) {
+        file_put_contents(__DIR__ . '/_testdata/datapath/queue-other_queue', 'a:0:{}');
+    }
+}
+
+function helper_tryUntil(Closure $callback, mixed $arg = null, int $maxTries = 100, int $sleep = 10000): mixed
+{
+    $tries = 0;
+
+    while (!($callbackReturnValue = $callback($arg)) && $tries < $maxTries) {
+        usleep($sleep);
+
+        $tries++;
+    }
+
+    return $callbackReturnValue;
+}
+
+/**
+ * @param string[] $contains
+ */
+function helper_containsInOneLine(string $string, array $contains): bool
+{
+    foreach (explode(PHP_EOL, $string) as $line) {
+        if (empty($line)) {
+            continue;
+        }
+
+        foreach ($contains as $containsElement) {
+            if (!str_contains($line, $containsElement)) {
+                continue 2;
+            }
+        }
+
+        return true;
+    }
+
+    return false;
+};

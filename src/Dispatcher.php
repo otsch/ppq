@@ -48,28 +48,32 @@ class Dispatcher
     /**
      * @throws Exception
      */
-    public function dispatch(): void
+    public function dispatch(): QueueRecord
     {
         $this->errorIfJobClassMissing();
 
-        $this->driver->add(new QueueRecord($this->queueName, $this->jobClassName, args: $this->args));
+        $record = new QueueRecord($this->queueName, $this->jobClassName, args: $this->args);
+
+        $this->driver->add($record);
 
         $this->reset();
+
+        return $record;
     }
 
     /**
      * @param null|string|string[] $matchArgs
      * @throws Exception
      */
-    public function dispatchIfNotYetInQueue(null|string|array $matchArgs = null): void
+    public function dispatchIfNotYetInQueue(null|string|array $matchArgs = null): ?QueueRecord
     {
         $this->errorIfJobClassMissing();
 
         if ($this->matchesWaitingOrRunningQueueJob($matchArgs)) {
-            return;
+            return null;
         }
 
-        $this->dispatch();
+        return $this->dispatch();
     }
 
     /**

@@ -128,6 +128,12 @@ php vendor/bin/ppq list
 
 Lists all the queues that you defined in your config and their currently running and waiting jobs.
 
+#### Cancel a Waiting or Running Job by its ID
+
+```php
+php vendor/bin/ppq cancel 1a2b3c.456def
+```
+
 #### Calling the Scheduler to start due Jobs
 
 ```bash
@@ -172,7 +178,7 @@ Dispatcher::queue('default')
     ->dispatch();
 ```
 
-This will dispatch the `Your\App\TestJob` to the `default` queue.
+This will dispatch the `Your\App\TestJob` to the `default` queue. In case you want to keep track of a queue job: the `dispatch()` method returns an instance of `QueueRecord` with the `id` of the job on the queue.
 
 #### Arguments
 

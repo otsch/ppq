@@ -20,13 +20,22 @@ test('stopQueues() returns true when the second argv array element is "stop"', f
     [true, ['vendor/bin/ppq', 'stop', 'foo']],
 ]);
 
-test('runJob() returns true when the second argv array element is "run-job"', function (bool $expect, array $argv) {
+test('runJob() returns true when the second argv array element is "run"', function (bool $expect, array $argv) {
     expect(Argv::make($argv)->runJob())->toBe($expect);
 })->with([
-    [true, ['vendor/bin/ppq', 'run-job']],
+    [true, ['vendor/bin/ppq', 'run']],
     [false, ['vendor/bin/ppq', 'foo']],
-    [false, ['vendor/bin/ppq', 'foo', 'run-job']],
-    [true, ['vendor/bin/ppq', 'run-job', 'foo']],
+    [false, ['vendor/bin/ppq', 'foo', 'run']],
+    [true, ['vendor/bin/ppq', 'run', 'foo']],
+]);
+
+test('cancelJob() returns true when the second argv array element is "cancel"', function (bool $expect, array $argv) {
+    expect(Argv::make($argv)->cancelJob())->toBe($expect);
+})->with([
+    [true, ['vendor/bin/ppq', 'cancel']],
+    [false, ['vendor/bin/ppq', 'foo']],
+    [false, ['vendor/bin/ppq', 'foo', 'cancel']],
+    [true, ['vendor/bin/ppq', 'cancel', 'foo']],
 ]);
 
 test(
@@ -51,5 +60,12 @@ test('list() returns true when the second argv array element is "list"', functio
 ]);
 
 test('jobId() returns the third argv argument', function () {
-    expect(Argv::make(['vendor/bin/ppq', 'run-job', '123.abc'])->jobId())->toBe('123.abc');
+    expect(Argv::make(['vendor/bin/ppq', 'run', '123.abc'])->jobId())->toBe('123.abc');
+});
+
+it('gets a config provided as --c argument at the end', function () {
+    expect(
+        Argv::make(['vendor/bin/ppq', 'run', '123.abc', '--c=/var/www/project/src/../config/queue.php'])
+            ->configPath()
+    )->toBe('/var/www/project/src/../config/queue.php');
 });
