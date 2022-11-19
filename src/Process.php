@@ -93,7 +93,7 @@ class Process
 
             $this->logger->warning(
                 'Cancelled running job ' . $this->queueRecord->id . ' (class ' . $this->queueRecord->jobClass .
-                ', args ' . $this->printArgs($this->queueRecord->args) . ')'
+                ', args ' . ListCommand::argsToString($this->queueRecord->args) . ')'
             );
 
             $this->reloadQueueRecord();
@@ -317,19 +317,5 @@ class Process
         if ($updatedQueueRecord) {
             $this->queueRecord = $updatedQueueRecord;
         }
-    }
-
-    /**
-     * @param mixed[] $args
-     */
-    protected function printArgs(array $args): string
-    {
-        $argsString = trim(str_replace(PHP_EOL, '', var_export($args, true)));
-
-        if (str_starts_with($argsString, 'array (') && str_ends_with($argsString, ')')) {
-            $argsString = '[' . trim(substr($argsString, 7, -1)) . ']';
-        }
-
-        return $argsString;
     }
 }

@@ -38,15 +38,19 @@ it('lists all the waiting and running jobs in all queues', function () {
     $cliOutput = $this->getActualOutput();
 
     expect($cliOutput)->toMatch(
-        '/Queue: default\n' .
-        'id: .+\..+, jobClass: Stubs\\\\TestJob - running\n' .
-        'id: .+\..+, jobClass: Stubs\\\\TestJob - waiting\n\n/'
+        '/' .
+        '\s+DEFAULT\n_+\n.*\n-*\n' .
+        '\|\s*[a-z0-9\.]{0,50}\s*\|\s*running\s*\|\s*Stubs\\\\TestJob\s*\|\s*\[\'two\' => 2\]\s*\|\n' .
+        '\|\s*[a-z0-9\.]{0,50}\s*\|\s*waiting\s*\|\s*Stubs\\\\TestJob\s*\|\s*\[\'one\' => 1\]\s*\|\n' .
+        '/'
     );
 
     expect($cliOutput)->toMatch(
-        '/Queue: other_queue\n' .
-        'id: .+\..+, jobClass: Stubs\\\\TestJob - running\n' .
-        'id: .+\..+, jobClass: Stubs\\\\TestJob - waiting\n' .
-        'id: .+\..+, jobClass: Stubs\\\\TestJob - waiting\n/'
+        '/' .
+        '\s+OTHER_QUEUE\n_+\n.*\n-*\n' .
+        '\|\s*[a-z0-9\.]{0,50}\s*\|\s*running\s*\|\s*Stubs\\\\TestJob\s*\|\s*\[\'six\' => 6\]\s*\|\n' .
+        '\|\s*[a-z0-9\.]{0,50}\s*\|\s*waiting\s*\|\s*Stubs\\\\TestJob\s*\|\s*\[\'five\' => 5\]\s*\|\n' .
+        '\|\s*[a-z0-9\.]{0,50}\s*\|\s*waiting\s*\|\s*Stubs\\\\TestJob\s*\|\s*\[\'eight\' => 8\]\s*\|\n' .
+        '/'
     );
 });
