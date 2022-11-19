@@ -45,8 +45,8 @@ class Queue
         $pid = $process->getPid();
 
         $this->logger->info(
-            'Started job: class ' . $waitingJob->jobClass . ', args ' . $this->printArgs($waitingJob->args) . ', id ' .
-            $waitingJob->id
+            'Started job: class ' . $waitingJob->jobClass . ', args ' . ListCommand::argsToString($waitingJob->args) .
+            ', id ' . $waitingJob->id
         );
 
         $waitingJob->status = QueueJobStatus::running;
@@ -153,19 +153,5 @@ class Queue
         }
 
         return Process::runningPhpProcessWithPidExists($queueJob->pid);
-    }
-
-    /**
-     * @param mixed[] $args
-     */
-    protected function printArgs(array $args): string
-    {
-        $argsString = trim(str_replace(PHP_EOL, '', var_export($args, true)));
-
-        if (str_starts_with($argsString, 'array (') && str_ends_with($argsString, ')')) {
-            $argsString = '[' . trim(substr($argsString, 7, -1)) . ']';
-        }
-
-        return $argsString;
     }
 }
