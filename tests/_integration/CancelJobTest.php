@@ -1,6 +1,7 @@
 <?php
 
-use Integration\WorkerProcess;
+namespace Integration;
+
 use Otsch\Ppq\Config;
 use Otsch\Ppq\Dispatcher;
 use Otsch\Ppq\Entities\QueueRecord;

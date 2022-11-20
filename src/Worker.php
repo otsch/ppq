@@ -206,6 +206,8 @@ class Worker
 
                     if ($doneCount > $queue->keepLastXPastJobs) {
                         $driver->forget($queueRecord->id);
+
+                        Logs::forget($queueRecord);
                     }
                 }
             }

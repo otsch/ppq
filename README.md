@@ -128,6 +128,24 @@ php vendor/bin/ppq list
 
 Lists all the queues that you defined in your config and their currently running and waiting jobs.
 
+#### Get Logs of a Job
+
+```bash
+php vendor/bin/ppq logs 1a2b3c.456def
+```
+
+By default, the `logs` command prints at max the last 1000 logged lines. If you want to get more or less, you can use the `--lines` option:
+
+```bash
+php vendor/bin/ppq logs 1a2b3c.456def --lines=1500
+```
+
+Or if you just want to get all logs for the job:
+
+```bash
+php vendor/bin/ppq logs 1a2b3c.456def --lines=all
+```
+
 #### Cancel a Waiting or Running Job by its ID
 
 ```bash

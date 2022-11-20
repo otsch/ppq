@@ -85,13 +85,31 @@ test('list() returns true when the second argv array element is "list"', functio
     [true, ['vendor/bin/ppq', 'list', 'foo']],
 ]);
 
+test('logs() returns true when the second argv array element is "logs"', function (bool $expect, array $argv) {
+    expect(Argv::make($argv)->logs())->toBe($expect);
+})->with([
+    [true, ['vendor/bin/ppq', 'logs']],
+    [false, ['vendor/bin/ppq', 'foo']],
+    [false, ['vendor/bin/ppq', 'foo', 'logs']],
+    [true, ['vendor/bin/ppq', 'logs', 'foo']],
+]);
+
+test('lines() returns the argument prefixed with --lines=', function (array $argv, string $result) {
+    expect(Argv::make($argv)->lines())->toBe($result);
+})->with([
+    [['vendor/bin/ppq', 'logs', '123.asdf', '--lines=500'], '500'],
+    [['vendor/bin/ppq', 'logs', '--lines=all'], 'all'],
+    [['vendor/bin/ppq', '--lines=200', 'logs'], '200'],
+    [['vendor/bin/ppq', 'logs', 'foo', 'bar', 'baz', '--lines=300'], '300'],
+]);
+
 test('jobId() returns the third argv argument', function () {
     expect(Argv::make(['vendor/bin/ppq', 'run', '123.abc'])->jobId())->toBe('123.abc');
 });
 
 it('gets a config provided as --c argument at the end', function () {
     expect(
-        Argv::make(['vendor/bin/ppq', 'run', '123.abc', '--c=/var/www/project/src/../config/queue.php'])
+        Argv::make(['vendor/bin/ppq', 'run', '123.abc', '--config=/var/www/project/src/../config/queue.php'])
             ->configPath()
     )->toBe('/var/www/project/src/../config/queue.php');
 });

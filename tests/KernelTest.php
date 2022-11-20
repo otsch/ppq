@@ -35,7 +35,7 @@ it('returns a Symfony Process instance to run a ppq command containing the full 
 it('appends the set config path as --c option to the ppq command', function () {
     $process = Kernel::ppqCommand('run 123');
 
-    expect($process->getCommandLine())->toEndWith('--c=' . Config::getPath());
+    expect($process->getCommandLine())->toEndWith('--config=' . Config::getPath());
 });
 
 it('calls the bootstrap file defined in the config when run() is called', function () {

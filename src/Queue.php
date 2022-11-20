@@ -38,7 +38,7 @@ class Queue
      */
     public function startWaitingJob(QueueRecord $waitingJob): void
     {
-        $process = Kernel::ppqCommand('run ' . $waitingJob->id);
+        $process = Kernel::ppqCommand('run ' . $waitingJob->id, Logs::queueJobLogPath($waitingJob));
 
         $process->start();
 
@@ -153,5 +153,22 @@ class Queue
         }
 
         return Process::runningPhpProcessWithPidExists($queueJob->pid);
+    }
+
+    protected function initLogPath(QueueRecord $queueRecord): void
+    {
+        $dataPath = Config::get('datapath');
+
+        $logsDir = $dataPath . (!str_ends_with($dataPath, '/') ? '/' : '') . 'logs';
+
+        if (!file_exists($logsDir)) {
+            mkdir($logsDir);
+        }
+
+        $queueLogsDir = $logsDir . '/' . $queueRecord->queue;
+
+        if (!file_exists($queueLogsDir)) {
+            mkdir($queueLogsDir);
+        }
     }
 }

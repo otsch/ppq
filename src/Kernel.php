@@ -31,9 +31,13 @@ class Kernel
         $this->logger = new EchoLogger();
     }
 
-    public static function ppqCommand(string $command): SymfonyProcess
+    public static function ppqCommand(string $command, ?string $logPath = null): SymfonyProcess
     {
-        $command = 'php ' . self::ppqPath() . ' ' . $command . ' --c=' . Config::getPath();
+        $command = 'php ' . self::ppqPath() . ' ' . $command . ' --config=' . Config::getPath();
+
+        if ($logPath) {
+            $command .= ' >> ' . $logPath . ' 2>&1';
+        }
 
         return SymfonyProcess::fromShellCommandline($command);
     }
@@ -64,6 +68,8 @@ class Kernel
             $this->checkSchedule();
         } elseif ($this->argv->list()) {
             $this->listCommand->list();
+        } elseif ($this->argv->logs()) {
+            $this->showLog();
         } elseif ($this->argv->clearQueue()) {
             $this->clearQueue();
         } elseif ($this->argv->clearAllQueues()) {
@@ -170,6 +176,27 @@ class Kernel
         Ppq::clearAll();
 
         $this->logger->info('Cleared all queues');
+    }
+
+    protected function showLog(): void
+    {
+        if ($this->argv->jobId()) {
+            $job = $this->getJobByIdOrFail();
+
+            /** @var QueueRecord $job */
+
+            $numberOfLines = $this->argv->lines();
+
+            if (is_numeric($numberOfLines)) {
+                $numberOfLines = (int) $numberOfLines;
+            } elseif ($numberOfLines === 'all') {
+                $numberOfLines = null;
+            } else {
+                $numberOfLines = 1000;
+            }
+
+            Logs::printJobLog($job, $numberOfLines);
+        }
     }
 
     protected function getJobByIdOrFail(): ?QueueRecord
