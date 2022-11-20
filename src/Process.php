@@ -94,12 +94,14 @@ class Process
     public function cancel(): void
     {
         if ($this->process->isRunning()) {
-            $this->process->stop();
+            $exitCode = $this->process->stop(0);
 
             $this->logger->warning(
                 'Cancelled running job ' . $this->queueRecord->id . ' (class ' . $this->queueRecord->jobClass .
                 ', args ' . ListCommand::argsToString($this->queueRecord->args) . ')'
             );
+
+            var_dump('exit code: ' . $exitCode);
 
             $this->reloadQueueRecord();
 
