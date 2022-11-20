@@ -50,7 +50,9 @@ class WorkerProcess
         if (self::$process) {
             var_dump('stop worker process');
 
-            self::$process->stop();
+            $exitCode = self::$process->stop();
+
+            var_dump($exitCode);
 
             var_dump(self::$process->getOutput());
 
