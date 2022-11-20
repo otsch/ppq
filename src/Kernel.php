@@ -33,6 +33,10 @@ class Kernel
 
     public static function ppqCommand(string $command, ?string $logPath = null): SymfonyProcess
     {
+        if ($logPath) {
+            touch($logPath);
+        }
+
         $command = 'php ' . self::ppqPath() . ' ' . $command . ' --config=' . Config::getPath();
 
         if ($logPath) {
