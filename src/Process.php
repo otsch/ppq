@@ -101,6 +101,8 @@ class Process
                 ', args ' . ListCommand::argsToString($this->queueRecord->args) . ')'
             );
 
+            var_dump($this->process->isRunning());
+            var_dump($this->process->isTerminated());
             var_dump('exit code: ' . $exitCode);
 
             $this->reloadQueueRecord();
