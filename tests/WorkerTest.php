@@ -42,7 +42,7 @@ it('processes queue jobs', function () {
         }
 
         return $updatedJob->status === QueueJobStatus::finished ? $updatedJob : false;
-    });
+    }, sleep: 30000);
 
     expect($finishedJob)->toBeInstanceOf(QueueRecord::class);
 

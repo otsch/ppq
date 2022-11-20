@@ -26,6 +26,8 @@ beforeAll(function () {
 
 afterAll(function () {
     WorkerProcess::stop();
+
+    helper_cleanUpDataPathQueueFiles();
 });
 
 it('logs output from queue jobs to a log file in expected path', function () {

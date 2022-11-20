@@ -72,7 +72,13 @@ function helper_cleanUpDataPathQueueFiles(): void
                         }
                     }
                 }
+
+                rmdir(__DIR__ . '/_testdata/datapath/logs/' . $queue);
             }
+        }
+
+        if (file_exists(__DIR__ . '/_testdata/datapath/logs')) {
+            rmdir(__DIR__ . '/_testdata/datapath/logs');
         }
     }
 }
