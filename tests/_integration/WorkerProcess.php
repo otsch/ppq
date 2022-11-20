@@ -52,6 +52,8 @@ class WorkerProcess
 
             self::$process->stop();
 
+            var_dump(self::$process->getOutput());
+
             self::$process = null;
 
             usleep(30000);
