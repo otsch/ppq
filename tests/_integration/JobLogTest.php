@@ -42,6 +42,8 @@ it('logs output from queue jobs to a log file in expected path', function () {
             Ppq::find($job->id)?->status === QueueJobStatus::finished;
     }, sleep: 50000);
 
+    expect(Ppq::find($job->id)?->status)->toBe(QueueJobStatus::finished);
+
     $logFilePath = Logs::queueJobLogPath($job);
 
     expect(file_exists($logFilePath))->toBeTrue();
@@ -80,6 +82,8 @@ test('the logs command prints the last 1000 lines by default', function () {
             Ppq::find($job->id)?->status === QueueJobStatus::finished;
     }, sleep: 50000);
 
+    expect(Ppq::find($job->id)?->status)->toBe(QueueJobStatus::finished);
+
     $logCommand = Kernel::ppqCommand('logs ' . $job->id);
 
     $logCommand->run();
@@ -106,6 +110,8 @@ test('the logs command prints only the last x lines with --lines parameter', fun
             Ppq::find($job->id)?->status === QueueJobStatus::finished;
     }, sleep: 50000);
 
+    expect(Ppq::find($job->id)?->status)->toBe(QueueJobStatus::finished);
+
     $logCommand = Kernel::ppqCommand('logs ' . $job->id . ' --lines=10');
 
     $logCommand->run();
@@ -131,6 +137,8 @@ test('the logs command prints the whole log with --lines=all', function () {
             count(Ppq::running('other_queue')) === 0 &&
             Ppq::find($job->id)?->status === QueueJobStatus::finished;
     }, sleep: 50000);
+
+    expect(Ppq::find($job->id)?->status)->toBe(QueueJobStatus::finished);
 
     $logCommand = Kernel::ppqCommand('logs ' . $job->id . ' --lines=all');
 
