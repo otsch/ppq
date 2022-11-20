@@ -94,6 +94,8 @@ class Process
     public function cancel(): void
     {
         if ($this->process->isRunning()) {
+            $pid = $this->process->getPid();
+
             $exitCode = $this->process->stop(0);
 
             $this->logger->warning(
@@ -104,6 +106,9 @@ class Process
             var_dump($this->process->isRunning());
             var_dump($this->process->isTerminated());
             var_dump('exit code: ' . $exitCode);
+            if (is_int($pid)) {
+                var_dump(Process::runningPhpProcessWithPidExists($pid));
+            }
 
             $this->reloadQueueRecord();
 
