@@ -11,7 +11,7 @@ use Otsch\Ppq\Ppq;
 use Stubs\TestJob;
 
 beforeEach(function () {
-    var_dump('before each');
+    var_dump('before each CancelJobTest');
 
     Config::setPath(__DIR__ . '/../_testdata/config/filesystem-ppq.php');
 
@@ -19,7 +19,7 @@ beforeEach(function () {
 });
 
 beforeAll(function () {
-    var_dump('before all');
+    var_dump('before all CancelJobTest');
 
     Config::setPath(__DIR__ . '/../_testdata/config/filesystem-ppq.php');
 
@@ -27,7 +27,7 @@ beforeAll(function () {
 });
 
 afterAll(function () {
-    var_dump('after all');
+    var_dump('after all CancelJobTest');
 
     WorkerProcess::stop();
 });

@@ -12,12 +12,16 @@ use Stubs\LogLinesTestJob;
 use Stubs\LogTestJob;
 
 beforeEach(function () {
+    var_dump('before each JobLogTest');
+
     Config::setPath(__DIR__ . '/../_testdata/config/filesystem-ppq.php');
 
     helper_cleanUpDataPathQueueFiles();
 });
 
 beforeAll(function () {
+    var_dump('before all JobLogTest');
+
     Config::setPath(__DIR__ . '/../_testdata/config/filesystem-ppq.php');
 
     helper_cleanUpDataPathQueueFiles();
@@ -26,6 +30,8 @@ beforeAll(function () {
 });
 
 afterAll(function () {
+    var_dump('after all JobLogTest');
+
     WorkerProcess::stop();
 
     helper_cleanUpDataPathQueueFiles();
