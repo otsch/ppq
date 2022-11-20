@@ -40,7 +40,7 @@ it('logs output from queue jobs to a log file in expected path', function () {
         return count(Ppq::waiting('other_queue')) === 0 &&
             count(Ppq::running('other_queue')) === 0 &&
             Ppq::find($job->id)?->status === QueueJobStatus::finished;
-    }, sleep: 50000);
+    }, maxTries: 500, sleep: 50000);
 
     expect(Ppq::find($job->id)?->status)->toBe(QueueJobStatus::finished);
 
@@ -80,7 +80,7 @@ test('the logs command prints the last 1000 lines by default', function () {
         return count(Ppq::waiting('default')) === 0 &&
             count(Ppq::running('default')) === 0 &&
             Ppq::find($job->id)?->status === QueueJobStatus::finished;
-    }, sleep: 50000);
+    }, maxTries: 500, sleep: 50000);
 
     expect(Ppq::find($job->id)?->status)->toBe(QueueJobStatus::finished);
 
@@ -108,7 +108,7 @@ test('the logs command prints only the last x lines with --lines parameter', fun
         return count(Ppq::waiting('other_queue')) === 0 &&
             count(Ppq::running('other_queue')) === 0 &&
             Ppq::find($job->id)?->status === QueueJobStatus::finished;
-    }, sleep: 50000);
+    }, maxTries: 500, sleep: 50000);
 
     expect(Ppq::find($job->id)?->status)->toBe(QueueJobStatus::finished);
 
@@ -136,7 +136,7 @@ test('the logs command prints the whole log with --lines=all', function () {
         return count(Ppq::waiting('other_queue')) === 0 &&
             count(Ppq::running('other_queue')) === 0 &&
             Ppq::find($job->id)?->status === QueueJobStatus::finished;
-    }, sleep: 50000);
+    }, maxTries: 500, sleep: 50000);
 
     expect(Ppq::find($job->id)?->status)->toBe(QueueJobStatus::finished);
 
