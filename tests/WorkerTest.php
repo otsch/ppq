@@ -11,8 +11,6 @@ use Stubs\TestJob;
 
 beforeEach(function () {
     Config::setPath(__DIR__ . '/_testdata/config/filesystem-ppq.php');
-
-    WorkerProcess::work();
 });
 
 beforeAll(function () {
