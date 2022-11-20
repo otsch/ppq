@@ -14,6 +14,8 @@ use Stubs\LogTestJob;
 beforeEach(function () {
     Config::setPath(__DIR__ . '/../_testdata/config/filesystem-ppq.php');
 
+    helper_cleanUpDataPathQueueFiles();
+
     WorkerProcess::work();
 });
 
@@ -41,6 +43,8 @@ it('logs output from queue jobs to a log file in expected path', function () {
             count(Ppq::running('other_queue')) === 0 &&
             Ppq::find($job->id)?->status === QueueJobStatus::finished;
     }, maxTries: 500, sleep: 50000);
+
+    var_dump($job->id);
 
     var_dump(WorkerProcess::$process?->getOutput());
 
@@ -84,6 +88,8 @@ test('the logs command prints the last 1000 lines by default', function () {
             Ppq::find($job->id)?->status === QueueJobStatus::finished;
     }, maxTries: 500, sleep: 50000);
 
+    var_dump($job->id);
+
     var_dump(WorkerProcess::$process?->getOutput());
 
     expect(Ppq::find($job->id)?->status)->toBe(QueueJobStatus::finished);
@@ -114,6 +120,8 @@ test('the logs command prints only the last x lines with --lines parameter', fun
             Ppq::find($job->id)?->status === QueueJobStatus::finished;
     }, maxTries: 500, sleep: 50000);
 
+    var_dump($job->id);
+
     var_dump(WorkerProcess::$process?->getOutput());
 
     expect(Ppq::find($job->id)?->status)->toBe(QueueJobStatus::finished);
@@ -143,6 +151,8 @@ test('the logs command prints the whole log with --lines=all', function () {
             count(Ppq::running('other_queue')) === 0 &&
             Ppq::find($job->id)?->status === QueueJobStatus::finished;
     }, maxTries: 500, sleep: 50000);
+
+    var_dump($job->id);
 
     var_dump(WorkerProcess::$process?->getOutput());
 
