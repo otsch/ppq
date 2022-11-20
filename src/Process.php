@@ -255,7 +255,7 @@ class Process
         }
 
         if ($pid === $ownPid - 1 || $pid === $ownPid + 1) {
-            if (self::stringContainsStrings($outputLine, $strings)) {
+            if (self::stringContainsStrings($outputLine, $strings) && str_starts_with($outputLine, 'sh -c ')) {
                 $ownProcess = self::findOwnProcessInPsCommandOutput($psCommandOutput, $ownPid);
 
                 if (!$ownProcess) {
@@ -304,7 +304,9 @@ class Process
             if ($process->isSuccessful() && self::processOutputContainsStrings($process, $strings)) {
                 $process = self::runCommand('cat /proc/' . $pid . '/cmdline');
 
-                return $process->isSuccessful() && self::processOutputContainsStrings($process, $strings);
+                return $process->isSuccessful() &&
+                    self::processOutputContainsStrings($process, $strings) &&
+                    str_starts_with($process->getOutput(), 'sh -c ');
             }
         }
 
