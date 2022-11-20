@@ -21,7 +21,7 @@ beforeAll(function () {
 
     helper_tryUntil(function () {
         return count(Ppq::waiting('default')) === 0 && count(Ppq::running('default')) === 0;
-    });
+    }, sleep: 50000);
 
     WorkerProcess::stop();
 });

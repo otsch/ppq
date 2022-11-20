@@ -35,7 +35,7 @@ it('logs output from queue jobs to a log file in expected path', function () {
 
     helper_tryUntil(function () {
         return count(Ppq::waiting('other_queue')) === 0 && count(Ppq::running('other_queue')) === 0;
-    });
+    }, sleep: 50000);
 
     $logFilePath = Logs::queueJobLogPath($job);
 
@@ -71,7 +71,7 @@ test('the logs command prints the last 1000 lines by default', function () {
 
     helper_tryUntil(function () {
         return count(Ppq::waiting('default')) === 0 && count(Ppq::running('default')) === 0;
-    });
+    }, sleep: 50000);
 
     $logCommand = Kernel::ppqCommand('logs ' . $job->id);
 
@@ -95,7 +95,7 @@ test('the logs command prints only the last x lines with --lines parameter', fun
 
     helper_tryUntil(function () {
         return count(Ppq::waiting('other_queue')) === 0 && count(Ppq::running('other_queue')) === 0;
-    });
+    }, sleep: 50000);
 
     $logCommand = Kernel::ppqCommand('logs ' . $job->id . ' --lines=10');
 
@@ -119,7 +119,7 @@ test('the logs command prints the whole log with --lines=all', function () {
 
     helper_tryUntil(function () {
         return count(Ppq::waiting('other_queue')) === 0 && count(Ppq::running('other_queue')) === 0;
-    });
+    }, sleep: 50000);
 
     $logCommand = Kernel::ppqCommand('logs ' . $job->id . ' --lines=all');
 
