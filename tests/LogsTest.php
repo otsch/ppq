@@ -129,4 +129,3 @@ it('creates the log dirs if they don\'t exist yet', function () {
 
     expect(file_exists($logsPath . '/' . $job->queue))->toBeTrue();
 });
-
