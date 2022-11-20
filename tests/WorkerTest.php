@@ -18,7 +18,7 @@ beforeAll(function () {
 
     helper_cleanUpDataPathQueueFiles();
 
-    WorkerProcess::work();
+    WorkerProcess::work('WorkerTest');
 });
 
 afterAll(function () {

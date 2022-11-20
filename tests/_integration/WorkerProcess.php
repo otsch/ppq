@@ -14,14 +14,14 @@ class WorkerProcess
      * @return void
      * @throws Exception
      */
-    public static function work(): void
+    public static function work(string $startingTest = ''): void
     {
         if (self::$process && !self::$process->isRunning()) {
             self::stop();
         }
 
         if (!self::$process) {
-            self::$process = Kernel::ppqCommand('work');
+            self::$process = Kernel::ppqCommand('work --startingtest=' . $startingTest);
 
             debug_print_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
 

@@ -15,7 +15,7 @@ beforeAll(function () {
 
     helper_cleanUpDataPathQueueFiles();
 
-    WorkerProcess::work();
+    WorkerProcess::work('LogsTest');
 
     (new FileDriver())->add(new QueueRecord('default', LogLinesTestJob::class, id: '123abc'));
 

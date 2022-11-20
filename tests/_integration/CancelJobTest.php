@@ -15,7 +15,7 @@ beforeEach(function () {
 
     Config::setPath(__DIR__ . '/../_testdata/config/filesystem-ppq.php');
 
-    WorkerProcess::work();
+    WorkerProcess::work('CancelJobTest');
 });
 
 beforeAll(function () {
