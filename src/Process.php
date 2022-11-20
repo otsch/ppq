@@ -75,6 +75,8 @@ class Process
                     !self::isOwnPidOrOneOffDuplicate($pid, $outputLine, $strings, $ownPid, $processOutput)
                 ) {
                     var_dump('found running process');
+                    var_dump($pid);
+                    var_dump($ownPid);
                     var_dump($outputLine);
 
                     return true;
