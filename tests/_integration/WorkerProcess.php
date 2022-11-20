@@ -23,6 +23,8 @@ class WorkerProcess
         if (!self::$process) {
             self::$process = Kernel::ppqCommand('work');
 
+            debug_print_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
+
             var_dump('start worker process');
 
             self::$process->start();
