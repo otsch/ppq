@@ -24,8 +24,6 @@ beforeAll(function () {
     Config::setPath(__DIR__ . '/../_testdata/config/filesystem-ppq.php');
 
     helper_cleanUpDataPathQueueFiles();
-
-    WorkerProcess::work();
 });
 
 afterAll(function () {
