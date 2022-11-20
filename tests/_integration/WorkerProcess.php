@@ -23,6 +23,8 @@ class WorkerProcess
         if (!self::$process) {
             self::$process = Kernel::ppqCommand('work');
 
+            var_dump('start worker process');
+
             self::$process->start();
 
             usleep(50000);
@@ -44,6 +46,8 @@ class WorkerProcess
     public static function stop(): void
     {
         if (self::$process) {
+            var_dump('stop worker process');
+
             self::$process->stop();
 
             self::$process = null;
