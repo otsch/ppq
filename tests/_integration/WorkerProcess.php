@@ -53,6 +53,8 @@ class WorkerProcess
             self::$process->stop();
 
             self::$process = null;
+
+            usleep(30000);
         }
     }
 }
