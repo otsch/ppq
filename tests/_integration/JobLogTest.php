@@ -4,6 +4,7 @@ namespace Integration;
 
 use Otsch\Ppq\Config;
 use Otsch\Ppq\Dispatcher;
+use Otsch\Ppq\Entities\Values\QueueJobStatus;
 use Otsch\Ppq\Kernel;
 use Otsch\Ppq\Logs;
 use Otsch\Ppq\Ppq;
@@ -35,8 +36,10 @@ it('logs output from queue jobs to a log file in expected path', function () {
         ->job(LogTestJob::class)
         ->dispatch();
 
-    helper_tryUntil(function () {
-        return count(Ppq::waiting('other_queue')) === 0 && count(Ppq::running('other_queue')) === 0;
+    helper_tryUntil(function () use ($job) {
+        return count(Ppq::waiting('other_queue')) === 0 &&
+            count(Ppq::running('other_queue')) === 0 &&
+            Ppq::find($job->id)?->status === QueueJobStatus::finished;
     }, sleep: 50000);
 
     $logFilePath = Logs::queueJobLogPath($job);
@@ -71,8 +74,10 @@ test('the logs command prints the last 1000 lines by default', function () {
         ->job(LogLinesTestJob::class)
         ->dispatch();
 
-    helper_tryUntil(function () {
-        return count(Ppq::waiting('default')) === 0 && count(Ppq::running('default')) === 0;
+    helper_tryUntil(function () use ($job) {
+        return count(Ppq::waiting('default')) === 0 &&
+            count(Ppq::running('default')) === 0 &&
+            Ppq::find($job->id)?->status === QueueJobStatus::finished;
     }, sleep: 50000);
 
     $logCommand = Kernel::ppqCommand('logs ' . $job->id);
@@ -95,8 +100,10 @@ test('the logs command prints only the last x lines with --lines parameter', fun
         ->job(LogLinesTestJob::class)
         ->dispatch();
 
-    helper_tryUntil(function () {
-        return count(Ppq::waiting('other_queue')) === 0 && count(Ppq::running('other_queue')) === 0;
+    helper_tryUntil(function () use ($job) {
+        return count(Ppq::waiting('other_queue')) === 0 &&
+            count(Ppq::running('other_queue')) === 0 &&
+            Ppq::find($job->id)?->status === QueueJobStatus::finished;
     }, sleep: 50000);
 
     $logCommand = Kernel::ppqCommand('logs ' . $job->id . ' --lines=10');
@@ -119,8 +126,10 @@ test('the logs command prints the whole log with --lines=all', function () {
         ->job(LogLinesTestJob::class)
         ->dispatch();
 
-    helper_tryUntil(function () {
-        return count(Ppq::waiting('other_queue')) === 0 && count(Ppq::running('other_queue')) === 0;
+    helper_tryUntil(function () use ($job) {
+        return count(Ppq::waiting('other_queue')) === 0 &&
+            count(Ppq::running('other_queue')) === 0 &&
+            Ppq::find($job->id)?->status === QueueJobStatus::finished;
     }, sleep: 50000);
 
     $logCommand = Kernel::ppqCommand('logs ' . $job->id . ' --lines=all');
