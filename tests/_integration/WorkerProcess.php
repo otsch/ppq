@@ -50,11 +50,19 @@ class WorkerProcess
         if (self::$process) {
             var_dump('stop worker process');
 
+            $workerProcessPid = self::$process->getPid();
+
+            var_dump('worker process pid: ' . $workerProcessPid);
+
             $exitCode = self::$process->stop(0);
 
             var_dump($exitCode);
 
             var_dump(self::$process->getOutput());
+
+            if (is_int($workerProcessPid)) {
+                var_dump(\Otsch\Ppq\Process::runningPhpProcessWithPidExists($workerProcessPid));
+            }
 
             self::$process = null;
 
