@@ -11,12 +11,16 @@ use Otsch\Ppq\Ppq;
 use Stubs\TestJob;
 
 beforeEach(function () {
+    var_dump('before each');
+
     Config::setPath(__DIR__ . '/../_testdata/config/filesystem-ppq.php');
 
     WorkerProcess::work();
 });
 
 beforeAll(function () {
+    var_dump('before all');
+
     Config::setPath(__DIR__ . '/../_testdata/config/filesystem-ppq.php');
 
     helper_cleanUpDataPathQueueFiles();
@@ -25,6 +29,8 @@ beforeAll(function () {
 });
 
 afterAll(function () {
+    var_dump('after all');
+
     WorkerProcess::stop();
 });
 
