@@ -8,6 +8,7 @@ use Otsch\Ppq\Entities\QueueRecord;
 use Otsch\Ppq\Entities\Values\QueueJobStatus;
 use Otsch\Ppq\Kernel;
 use Otsch\Ppq\Ppq;
+use Otsch\Ppq\Processes;
 use Otsch\Ppq\Utils;
 use Stubs\TestJob;
 
@@ -69,15 +70,17 @@ it('cancels a running job', function () {
 
     expect(Ppq::find($job->id)?->status)->toBe(QueueJobStatus::cancelled);
 
-    Utils::tryUntil(function () use ($job) {
+    $updatedJob = Utils::tryUntil(function () use ($job) {
         $job = Ppq::find($job->id);
 
         return $job?->pid === null ? $job : false;
-    });
+    }, maxTries: 200, sleep: 50000);
 
     $workerProcessOutput = WorkerProcess::$process?->getOutput() ?? '';
 
     expect(helper_containsInOneLine($workerProcessOutput, ['Started job', $job->id]))->toBeTrue();
 
     expect(helper_containsInOneLine($workerProcessOutput, ['Cancelled running job', $job->id]))->toBeTrue();
+
+    expect(Processes::pidStillExists($job->pid))->toBeFalse();
 });
