@@ -86,12 +86,6 @@ class WorkerProcess
                         throw new Exception('Stopping worker process failed');
                     }
                 }
-
-                if (\Otsch\Ppq\WorkerProcess::isWorking()) {
-                    self::tryToFindAndKillWorkerSubProcessZombie();
-                }
-
-                self::resetProcessData();
             } else {
                 if (is_int(self::$pid) && Processes::pidStillExists(self::$pid)) {
                     self::$process->stop(0);
@@ -104,13 +98,13 @@ class WorkerProcess
                         throw new Exception('Stopping worker process failed');
                     }
                 }
-
-                if (\Otsch\Ppq\WorkerProcess::isWorking()) {
-                    self::tryToFindAndKillWorkerSubProcessZombie();
-                }
-
-                self::resetProcessData();
             }
+
+            if (\Otsch\Ppq\WorkerProcess::isWorking()) {
+                self::tryToFindAndKillWorkerSubProcessZombie();
+            }
+
+            self::resetProcessData();
         }
     }
 

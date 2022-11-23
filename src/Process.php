@@ -69,15 +69,15 @@ class Process
     {
         $pid = $this->process->getPid();
 
-        if ($pid) {
-            $command = Processes::getCommandByPid($pid);
-        }
+//        if ($pid) {
+//            $command = Processes::getCommandByPid($pid);
+//        }
 
         /** @var int $pid */
 
         $this->process->stop(0);
 
-        if (!empty($command)) {
+        /*if (!empty($command)) {
             $this->tryToFindAndKillZombieSubProcesses($pid, $command);
         }
 
@@ -99,7 +99,12 @@ class Process
                 'Cancelled running job ' . $this->queueRecord->id . ' (class ' . $this->queueRecord->jobClass .
                 ', args ' . ListCommand::argsToString($this->queueRecord->args) . ')'
             );
-        }
+        }*/
+
+        $this->logger->warning(
+            'Cancelled running job ' . $this->queueRecord->id . ' (class ' . $this->queueRecord->jobClass .
+            ', args ' . ListCommand::argsToString($this->queueRecord->args) . ')'
+        );
 
         $this->reloadQueueRecord();
 
