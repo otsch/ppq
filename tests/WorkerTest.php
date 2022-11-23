@@ -18,7 +18,7 @@ beforeEach(function () {
 beforeAll(function () {
     Config::setPath(__DIR__ . '/_testdata/config/filesystem-ppq.php');
 
-    WorkerProcess::work('WorkerTest');
+    WorkerProcess::work();
 });
 
 afterAll(function () {

@@ -31,12 +31,11 @@ class WorkerProcess
     }
 
     /**
-     * @param string $startingTest
      * @return void
      * @throws Exception
      * @throws MissingDataPathException
      */
-    public static function work(string $startingTest = ''): void
+    public static function work(): void
     {
         if (self::$process && !self::$process->isRunning()) {
             self::stop();
@@ -47,7 +46,7 @@ class WorkerProcess
                 throw new Exception('Worker already working: ' . (\Otsch\Ppq\WorkerProcess::getPid() ?? 'unknown pid'));
             }
 
-            self::$process = Kernel::ppqCommand('work --startingtest=' . $startingTest);
+            self::$process = Kernel::ppqCommand('work');
 
             self::$process->start();
 
@@ -61,7 +60,7 @@ class WorkerProcess
 
             self::$pid = self::$process->getPid();
 
-            self::logger()->info('Started worker process ' . self::$pid . ' - ' . $startingTest);
+            self::logger()->info('Started worker process ' . self::$pid);
 
             if (is_int(self::$pid)) {
                 self::$processCommand = Processes::getCommandByPid(self::$pid);

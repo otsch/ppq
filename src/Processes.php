@@ -174,34 +174,25 @@ class Processes
     {
         $command = self::runCommand('kill -9 ' . $pid);
 
-        if (!$command->isSuccessful()) {
-            return false;
-        }
-
-        if (self::pidStillExists($pid)) {
-            Utils::tryUntil(function () use ($pid) {
-                return self::pidStillExists($pid) === false;
-            }, 10, 50000);
-        }
-
-        return self::pidStillExists($pid);
+        return $command->isSuccessful() && !self::pidStillExists($pid);
     }
 
+    /**
+     * Check if some process is a zombie
+     *
+     * Returns also true in case the process isn't found, because this method is called when killing the process didn't
+     * work and if it's a zombie process it's just ignored. So when the process now doesn't exist anymore, that's also
+     * good.
+     */
     public static function isZombie(int $pid): bool
     {
         if (self::psCommandAvailable()) {
             $command = self::getCommandByPid($pid);
 
-            var_dump('is zombie?');
-            var_dump($command);
-
             return !$command || str_contains($command, '<defunct>');
         } else {
             $statusCommand = self::runCommand('cat /proc/' . $pid . '/status');
 
-            // In case the process isn't found, let's return true, because this method is called when killing the
-            // process didn't work and if it's a zombie process it's just ignored. So when the process now doesn't
-            // exist anymore, that's also good.
             if (
                 !$statusCommand->isSuccessful() &&
                 str_contains($statusCommand->getErrorOutput(), 'No such file or directory')

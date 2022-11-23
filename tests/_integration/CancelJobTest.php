@@ -21,7 +21,7 @@ beforeAll(function () {
 
     helper_cleanUpDataPathQueueFiles();
 
-    WorkerProcess::work('CancelJobTest');
+    WorkerProcess::work();
 });
 
 afterAll(function () {
@@ -70,7 +70,7 @@ it('cancels a running job', function () {
 
     expect(Ppq::find($job->id)?->status)->toBe(QueueJobStatus::cancelled);
 
-    $updatedJob = Utils::tryUntil(function () use ($job) {
+    Utils::tryUntil(function () use ($job) {
         $job = Ppq::find($job->id);
 
         return $job?->pid === null ? $job : false;
