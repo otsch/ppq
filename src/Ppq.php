@@ -4,6 +4,7 @@ namespace Otsch\Ppq;
 
 use Otsch\Ppq\Entities\QueueRecord;
 use Otsch\Ppq\Entities\Values\QueueJobStatus;
+use Otsch\Ppq\Exceptions\MissingDataPathException;
 
 class Ppq
 {
@@ -112,6 +113,17 @@ class Ppq
         ?int $pid = null,
     ): array {
         return Config::getDriver()->where($queue, $jobClassName, $status, $args, $pid);
+    }
+
+    public static function dataPath(string $pathWithinDataPath = ''): string
+    {
+        $path = Config::get('datapath');
+
+        if (!$path) {
+            throw new MissingDataPathException('No datapath defined in config.');
+        }
+
+        return $path . (!str_ends_with($path, '/') ? '/' : '') . $pathWithinDataPath;
     }
 
     /**

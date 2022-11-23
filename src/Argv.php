@@ -64,6 +64,16 @@ class Argv
         return isset($this->argv[1]) && $this->argv[1] === 'list';
     }
 
+    public function logs(): bool
+    {
+        return isset($this->argv[1]) && $this->argv[1] === 'logs';
+    }
+
+    public function lines(): ?string
+    {
+        return $this->getArgValueByKey('lines');
+    }
+
     public function jobId(): ?string
     {
         return $this->argv[2] ?? null;
@@ -71,10 +81,15 @@ class Argv
 
     public function configPath(): ?string
     {
-        $lastArg = end($this->argv);
+        return $this->getArgValueByKey('config');
+    }
 
-        if (!empty($lastArg) && str_starts_with($lastArg, '--c=')) {
-            return substr($lastArg, 4);
+    protected function getArgValueByKey(string $key): ?string
+    {
+        foreach ($this->argv as $arg) {
+            if (!empty($arg) && str_starts_with($arg, '--' . $key . '=')) {
+                return substr($arg, strlen($key) + 3);
+            }
         }
 
         return null;

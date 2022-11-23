@@ -56,19 +56,31 @@ function helper_cleanUpDataPathQueueFiles(): void
     if (file_exists(__DIR__ . '/_testdata/datapath/queue-infinite_waiting_jobs_queue')) {
         file_put_contents(__DIR__ . '/_testdata/datapath/queue-infinite_waiting_jobs_queue', 'a:0:{}');
     }
-}
 
-function helper_tryUntil(Closure $callback, mixed $arg = null, int $maxTries = 100, int $sleep = 10000): mixed
-{
-    $tries = 0;
+    // clean up logs
+    if (file_exists(__DIR__ . '/_testdata/datapath/logs')) {
+        $queues = ['default', 'other_queue', 'infinite_waiting_jobs_queue'];
 
-    while (!($callbackReturnValue = $callback($arg)) && $tries < $maxTries) {
-        usleep($sleep);
+        foreach ($queues as $queue) {
+            if (file_exists(__DIR__ . '/_testdata/datapath/logs/' . $queue)) {
+                $filesInDir = scandir(__DIR__ . '/_testdata/datapath/logs/' . $queue);
 
-        $tries++;
+                if (is_array($filesInDir)) {
+                    foreach ($filesInDir as $file) {
+                        if (str_ends_with($file, '.log')) {
+                            unlink(__DIR__ . '/_testdata/datapath/logs/' . $queue . '/' . $file);
+                        }
+                    }
+                }
+
+                rmdir(__DIR__ . '/_testdata/datapath/logs/' . $queue);
+            }
+        }
+
+        if (file_exists(__DIR__ . '/_testdata/datapath/logs')) {
+            rmdir(__DIR__ . '/_testdata/datapath/logs');
+        }
     }
-
-    return $callbackReturnValue;
 }
 
 /**

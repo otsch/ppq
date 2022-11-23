@@ -1,5 +1,7 @@
 <?php
 
+namespace Integration;
+
 use Otsch\Ppq\Config;
 use Otsch\Ppq\Dispatcher;
 use Otsch\Ppq\Kernel;
@@ -8,11 +10,19 @@ use Stubs\TestJob;
 
 beforeEach(function () {
     Config::setPath(__DIR__ . '/../_testdata/config/filesystem-ppq.php');
+
+    helper_cleanUpDataPathQueueFiles();
 });
 
 beforeAll(function () {
     Config::setPath(__DIR__ . '/../_testdata/config/filesystem-ppq.php');
 
+    helper_cleanUpDataPathQueueFiles();
+
+    WorkerProcess::stop();
+});
+
+afterAll(function () {
     helper_cleanUpDataPathQueueFiles();
 });
 

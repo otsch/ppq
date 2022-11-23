@@ -30,9 +30,13 @@ class Worker
      */
     public function workQueues(): void
     {
-        if ($this->queuesAreAlreadyWorking()) {
+        if (WorkerProcess::isWorking()) {
             throw new Exception('Queues are already working');
         }
+
+        $this->logger->info('Start working queues');
+
+        WorkerProcess::set();
 
         $nextCheck = microtime(true);
 
@@ -56,6 +60,8 @@ class Worker
             $this->checkSignals();
 
             $this->checkQueues();
+
+            WorkerProcess::heartbeat();
         }
     }
 
@@ -206,14 +212,11 @@ class Worker
 
                     if ($doneCount > $queue->keepLastXPastJobs) {
                         $driver->forget($queueRecord->id);
+
+                        Logs::forget($queueRecord);
                     }
                 }
             }
         }
-    }
-
-    private function queuesAreAlreadyWorking(): bool
-    {
-        return Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']);
     }
 }

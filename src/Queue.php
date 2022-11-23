@@ -38,7 +38,7 @@ class Queue
      */
     public function startWaitingJob(QueueRecord $waitingJob): void
     {
-        $process = Kernel::ppqCommand('run ' . $waitingJob->id);
+        $process = Kernel::ppqCommand('run ' . $waitingJob->id, Logs::queueJobLogPath($waitingJob));
 
         $process->start();
 
@@ -152,6 +152,6 @@ class Queue
             return false;
         }
 
-        return Process::runningPhpProcessWithPidExists($queueJob->pid);
+        return Processes::pidStillExists($queueJob->pid);
     }
 }
