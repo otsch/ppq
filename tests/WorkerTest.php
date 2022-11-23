@@ -108,8 +108,6 @@ it('stops working the queues when it receives the stop signal', function () {
         return \Otsch\Ppq\WorkerProcess::isWorking() === false;
     });
 
-    var_dump(Config::getDriver()->get($job->id)?->status);
-
     expect(Config::getDriver()->get($job->id)?->status)->toBe(QueueJobStatus::finished);
 
     expect(\Otsch\Ppq\WorkerProcess::isWorking())->toBeFalse();

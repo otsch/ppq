@@ -8,7 +8,7 @@ class Processes
 {
     protected static ?int $ownPid = null;
 
-    protected static bool $psCommandAvailable = true;
+    protected static ?bool $psCommandAvailable = null;
 
     /**
      * @var array<int, mixed[]>
@@ -177,6 +177,29 @@ class Processes
         return $command->isSuccessful() && self::pidStillExists($pid);
     }
 
+    public static function isZombie(int $pid): bool
+    {
+        if (self::psCommandAvailable()) {
+            $command = self::getCommandByPid($pid);
+
+            return str_contains($command ?? '', '<defunct>');
+        } else {
+            $statusCommand = self::runCommand('cat /proc/' . $pid . '/status');
+
+            // In case the process isn't found, let's return true, because this method is called when killing the
+            // process didn't work and if it's a zombie process it's just ignored. So when the process now doesn't
+            // exist anymore, that's also good.
+            if (
+                !$statusCommand->isSuccessful() &&
+                str_contains($statusCommand->getErrorOutput(), 'No such file or directory')
+            ) {
+                return true;
+            }
+
+            return str_contains($statusCommand->getOutput(), 'Status:' . chr(9) . 'Z (zombie)');
+        }
+    }
+
     public static function runCommand(string $command): \Symfony\Component\Process\Process
     {
         $command = \Symfony\Component\Process\Process::fromShellCommandline($command);
@@ -214,9 +237,20 @@ class Processes
         return $processes;
     }
 
+    protected static function psCommandAvailable(): bool
+    {
+        if (self::$psCommandAvailable === null) {
+            self::getPsCommandOutput();
+        }
+
+        /** @var bool self::$psCommandAvailable */
+
+        return self::$psCommandAvailable;
+    }
+
     protected static function getPsCommandOutput(): ?string
     {
-        if (!self::$psCommandAvailable) {
+        if (self::$psCommandAvailable === false) {
             return null;
         }
 
@@ -227,6 +261,8 @@ class Processes
 
             return null;
         }
+
+        self::$psCommandAvailable = true;
 
         return $command->getOutput();
     }

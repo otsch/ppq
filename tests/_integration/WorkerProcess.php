@@ -5,8 +5,10 @@ namespace Integration;
 use Exception;
 use Otsch\Ppq\Exceptions\MissingDataPathException;
 use Otsch\Ppq\Kernel;
+use Otsch\Ppq\Loggers\EchoLogger;
 use Otsch\Ppq\Processes;
 use Otsch\Ppq\Utils;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Process\Process;
 
 class WorkerProcess
@@ -16,6 +18,17 @@ class WorkerProcess
     public static ?int $pid = null;
 
     public static ?string $processCommand = null;
+
+    protected static ?LoggerInterface $logger = null;
+
+    protected static function logger(): LoggerInterface
+    {
+        if (!self::$logger) {
+            self::$logger = new EchoLogger();
+        }
+
+        return self::$logger;
+    }
 
     /**
      * @param string $startingTest
@@ -64,13 +77,27 @@ class WorkerProcess
             if (!self::$process->isRunning()) {
                 self::$process->stop(0);
 
+                usleep(50000);
+
+                if (is_int(self::$pid) && Processes::pidStillExists(self::$pid)) {
+                    throw new Exception('Stopping worker process failed');
+                }
+
                 if (\Otsch\Ppq\WorkerProcess::isWorking()) {
                     self::tryToFindAndKillWorkerSubProcessZombie();
                 }
 
                 self::resetProcessData();
             } else {
-                self::$process->stop(0);
+                if (is_int(self::$pid) && Processes::pidStillExists(self::$pid)) {
+                    self::$process->stop(0);
+
+                    usleep(50000);
+                }
+
+                if (is_int(self::$pid) && Processes::pidStillExists(self::$pid)) {
+                    throw new Exception('Stopping worker process failed');
+                }
 
                 if (\Otsch\Ppq\WorkerProcess::isWorking()) {
                     self::tryToFindAndKillWorkerSubProcessZombie();
@@ -107,11 +134,13 @@ class WorkerProcess
                 self::$processCommand // @phpstan-ignore-line
             )
         ) {
-            if (Processes::kill($otherWorkerPid)) {
+            if (Processes::kill($otherWorkerPid) || Processes::isZombie($otherWorkerPid)) {
                 \Otsch\Ppq\WorkerProcess::unset();
             } else {
                 throw new Exception('Failed to kill worker sub-process ' . $otherWorkerPid);
             }
+        } elseif (Processes::isZombie($otherWorkerPid)) {
+            \Otsch\Ppq\WorkerProcess::unset();
         } else {
             throw new Exception('Untracked worker process running: ' . $otherWorkerPid . ' - ' . $otherWorkerCommand);
         }
