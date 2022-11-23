@@ -200,7 +200,7 @@ class Processes
                 return true;
             }
 
-            return str_contains($statusCommand->getOutput(), 'Status:' . chr(9) . 'Z (zombie)');
+            return str_contains($statusCommand->getOutput(), 'State:' . chr(9) . 'Z (zombie)');
         }
     }
 

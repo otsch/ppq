@@ -118,13 +118,13 @@ class WorkerProcess
         $otherWorkerPid = \Otsch\Ppq\WorkerProcess::getPid();
 
         if (!$otherWorkerPid) {
-            throw new Exception('WorkerProcess thinks that a worker is running but has no pid.');
+            return;
         }
 
         $otherWorkerCommand = Processes::getCommandByPid($otherWorkerPid);
 
         if (!$otherWorkerCommand) {
-            throw new Exception('Can\'t get command of other worker process.');
+            return;
         }
 
         if (
