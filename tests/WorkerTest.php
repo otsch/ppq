@@ -25,6 +25,15 @@ afterAll(function () {
     WorkerProcess::stop();
 });
 
+function helper_getPastQueueRecordWithDoneTime(int $doneTime): QueueRecord
+{
+    $statuses = [QueueJobStatus::finished, QueueJobStatus::failed, QueueJobStatus::lost];
+
+    $status = $statuses[rand(0, 2)];
+
+    return new QueueRecord('default', TestJob::class, $status, doneTime: $doneTime);
+}
+
 it('processes queue jobs', function () {
     expect(\Otsch\Ppq\WorkerProcess::isWorking())->toBeTrue();
 
@@ -47,49 +56,45 @@ it('processes queue jobs', function () {
     expect($finishedJob->status)->toBe(QueueJobStatus::finished);
 });
 
-it('removes done (finished, failed, lost) jobs that exceed the configured limit of jobs to keep', function () {
-    expect(\Otsch\Ppq\WorkerProcess::isWorking())->toBeTrue();
+it(
+    'removes done (finished, failed, lost) jobs that exceed the configured limit of jobs to keep and removes jobs ' .
+    'with lower doneTime first',
+    function () {
+        expect(\Otsch\Ppq\WorkerProcess::isWorking())->toBeTrue();
 
-    Config::getDriver()->add(new QueueRecord('default', TestJob::class, QueueJobStatus::finished));
+        $now = Utils::currentMicrosecondsInt();
 
-    Config::getDriver()->add(new QueueRecord('default', TestJob::class, QueueJobStatus::finished));
+        $addToDoneTime = [3, 4, 6, 1, 7, 5, 2, 9, 11, 8, 10, 12, 14, 13];
 
-    Config::getDriver()->add(new QueueRecord('default', TestJob::class, QueueJobStatus::finished));
-
-    Config::getDriver()->add(new QueueRecord('default', TestJob::class, QueueJobStatus::failed));
-
-    Config::getDriver()->add(new QueueRecord('default', TestJob::class, QueueJobStatus::failed));
-
-    Config::getDriver()->add(new QueueRecord('default', TestJob::class, QueueJobStatus::finished));
-
-    Config::getDriver()->add(new QueueRecord('default', TestJob::class, QueueJobStatus::finished));
-
-    Config::getDriver()->add(new QueueRecord('default', TestJob::class, QueueJobStatus::finished));
-
-    Config::getDriver()->add(new QueueRecord('default', TestJob::class, QueueJobStatus::lost));
-
-    Config::getDriver()->add(new QueueRecord('default', TestJob::class, QueueJobStatus::finished));
-
-    Config::getDriver()->add(new QueueRecord('default', TestJob::class, QueueJobStatus::lost));
-
-    Config::getDriver()->add(new QueueRecord('default', TestJob::class, QueueJobStatus::finished));
-
-    $time = \Otsch\Ppq\WorkerProcess::getTime();
-
-    Utils::tryUntil(function () use ($time) {
-        return \Otsch\Ppq\WorkerProcess::getTime() !== $time;
-    }, sleep: 50000);
-
-    $doneJobsCount = 0;
-
-    foreach (Ppq::where('default') as $job) {
-        if ($job->status->isPast()) {
-            $doneJobsCount++;
+        foreach ($addToDoneTime as $addMicroseconds) {
+            Config::getDriver()->add(helper_getPastQueueRecordWithDoneTime($now + $addMicroseconds));
         }
-    }
 
-    expect($doneJobsCount)->toBe(10);
-});
+        $time = \Otsch\Ppq\WorkerProcess::getTime();
+
+        Utils::tryUntil(function () use ($time) {
+            return \Otsch\Ppq\WorkerProcess::getTime() !== $time;
+        }, sleep: 50000);
+
+        $doneJobsCount = 0;
+
+        $oldestDoneTime = null;
+
+        foreach (Ppq::where('default') as $job) {
+            if ($job->status->isPast()) {
+                $doneJobsCount++;
+            }
+
+            if (!$oldestDoneTime || $job->doneTime < $oldestDoneTime) {
+                $oldestDoneTime = $job->doneTime;
+            }
+        }
+
+        expect($doneJobsCount)->toBe(10);
+
+        expect($oldestDoneTime)->toBe($now + 5);
+    }
+);
 
 it('stops working the queues when it receives the stop signal', function () {
     expect(\Otsch\Ppq\WorkerProcess::isWorking())->toBeTrue();

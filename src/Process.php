@@ -32,6 +32,8 @@ class Process
 
         $this->queueRecord->pid = null;
 
+        $this->queueRecord->setDoneNow();
+
         Config::getDriver()->update($this->queueRecord);
     }
 
@@ -46,6 +48,8 @@ class Process
         }
 
         $this->queueRecord->pid = null;
+
+        $this->queueRecord->setDoneNow();
 
         Config::getDriver()->update($this->queueRecord);
 

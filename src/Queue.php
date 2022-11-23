@@ -141,6 +141,8 @@ class Queue
 
         $queueJob->pid = null;
 
+        $queueJob->setDoneNow();
+
         Config::getDriver()->update($queueJob);
 
         $this->logger->warning('Updated status of lost job with id ' . $queueJob->id);
