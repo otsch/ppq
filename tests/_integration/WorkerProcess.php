@@ -136,10 +136,16 @@ class WorkerProcess
                 self::$processCommand // @phpstan-ignore-line
             )
         ) {
-            if (Processes::kill($otherWorkerPid) || Processes::isZombie($otherWorkerPid)) {
-                \Otsch\Ppq\WorkerProcess::unset();
-            } else {
-                throw new Exception('Failed to kill worker sub-process ' . $otherWorkerPid);
+            $stoppedWorking = Utils::tryUntil(function () {
+                return \Otsch\Ppq\WorkerProcess::isWorking() === false;
+            });
+
+            if (!$stoppedWorking) {
+                if (Processes::kill($otherWorkerPid) || Processes::isZombie($otherWorkerPid)) {
+                    \Otsch\Ppq\WorkerProcess::unset();
+                } else {
+                    throw new Exception('Failed to kill worker sub-process ' . $otherWorkerPid);
+                }
             }
         } elseif (Processes::isZombie($otherWorkerPid)) {
             \Otsch\Ppq\WorkerProcess::unset();

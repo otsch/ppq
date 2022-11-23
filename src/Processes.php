@@ -192,6 +192,9 @@ class Processes
         if (self::psCommandAvailable()) {
             $command = self::getCommandByPid($pid);
 
+            var_dump('is zombie?');
+            var_dump($command);
+
             return str_contains($command ?? '', '<defunct>');
         } else {
             $statusCommand = self::runCommand('cat /proc/' . $pid . '/status');
