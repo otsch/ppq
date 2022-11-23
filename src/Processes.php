@@ -195,7 +195,7 @@ class Processes
             var_dump('is zombie?');
             var_dump($command);
 
-            return str_contains($command ?? '', '<defunct>');
+            return !$command || str_contains($command, '<defunct>');
         } else {
             $statusCommand = self::runCommand('cat /proc/' . $pid . '/status');
 
