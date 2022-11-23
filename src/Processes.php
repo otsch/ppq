@@ -174,7 +174,17 @@ class Processes
     {
         $command = self::runCommand('kill -9 ' . $pid);
 
-        return $command->isSuccessful() && self::pidStillExists($pid);
+        if (!$command->isSuccessful()) {
+            return false;
+        }
+
+        if (self::pidStillExists($pid)) {
+            Utils::tryUntil(function () use ($pid) {
+                return self::pidStillExists($pid) === false;
+            }, 10, 50000);
+        }
+
+        return self::pidStillExists($pid);
     }
 
     public static function isZombie(int $pid): bool

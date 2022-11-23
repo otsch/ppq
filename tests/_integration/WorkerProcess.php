@@ -77,10 +77,14 @@ class WorkerProcess
             if (!self::$process->isRunning()) {
                 self::$process->stop(0);
 
-                usleep(50000);
+                if (is_int(self::$pid)) {
+                    Utils::tryUntil(function () {
+                        return is_int(self::$pid) && Processes::pidStillExists(self::$pid) === false;
+                    });
 
-                if (is_int(self::$pid) && Processes::pidStillExists(self::$pid)) {
-                    throw new Exception('Stopping worker process failed');
+                    if (Processes::pidStillExists(self::$pid)) {
+                        throw new Exception('Stopping worker process failed');
+                    }
                 }
 
                 if (\Otsch\Ppq\WorkerProcess::isWorking()) {
@@ -92,11 +96,13 @@ class WorkerProcess
                 if (is_int(self::$pid) && Processes::pidStillExists(self::$pid)) {
                     self::$process->stop(0);
 
-                    usleep(50000);
-                }
+                    Utils::tryUntil(function () {
+                        return is_int(self::$pid) && Processes::pidStillExists(self::$pid) === false;
+                    });
 
-                if (is_int(self::$pid) && Processes::pidStillExists(self::$pid)) {
-                    throw new Exception('Stopping worker process failed');
+                    if (Processes::pidStillExists(self::$pid)) { // @phpstan-ignore-line
+                        throw new Exception('Stopping worker process failed');
+                    }
                 }
 
                 if (\Otsch\Ppq\WorkerProcess::isWorking()) {
