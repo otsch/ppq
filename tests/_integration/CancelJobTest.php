@@ -8,27 +8,22 @@ use Otsch\Ppq\Entities\QueueRecord;
 use Otsch\Ppq\Entities\Values\QueueJobStatus;
 use Otsch\Ppq\Kernel;
 use Otsch\Ppq\Ppq;
+use Otsch\Ppq\Utils;
 use Stubs\TestJob;
 
 beforeEach(function () {
-    var_dump('before each CancelJobTest');
-
     Config::setPath(__DIR__ . '/../_testdata/config/filesystem-ppq.php');
+});
+
+beforeAll(function () {
+    Config::setPath(__DIR__ . '/../_testdata/config/filesystem-ppq.php');
+
+    helper_cleanUpDataPathQueueFiles();
 
     WorkerProcess::work('CancelJobTest');
 });
 
-beforeAll(function () {
-    var_dump('before all CancelJobTest');
-
-    Config::setPath(__DIR__ . '/../_testdata/config/filesystem-ppq.php');
-
-    helper_cleanUpDataPathQueueFiles();
-});
-
 afterAll(function () {
-    var_dump('after all CancelJobTest');
-
     WorkerProcess::stop();
 });
 
@@ -56,7 +51,7 @@ it('cancels a running job', function () {
         ->args(['countTo' => 99999999])
         ->dispatch();
 
-    $job = helper_tryUntil(function () use ($job) {
+    $job = Utils::tryUntil(function () use ($job) {
         $job = Ppq::find($job->id);
 
         return $job?->status === QueueJobStatus::running ? $job : false;
@@ -74,7 +69,7 @@ it('cancels a running job', function () {
 
     expect(Ppq::find($job->id)?->status)->toBe(QueueJobStatus::cancelled);
 
-    $job = helper_tryUntil(function () use ($job) {
+    Utils::tryUntil(function () use ($job) {
         $job = Ppq::find($job->id);
 
         return $job?->pid === null ? $job : false;

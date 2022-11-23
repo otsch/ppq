@@ -2,57 +2,57 @@
 
 namespace Integration;
 
+use Exception;
 use Otsch\Ppq\Config;
-use Otsch\Ppq\Dispatcher;
+use Otsch\Ppq\Drivers\FileDriver;
+use Otsch\Ppq\Entities\QueueRecord;
 use Otsch\Ppq\Entities\Values\QueueJobStatus;
 use Otsch\Ppq\Kernel;
 use Otsch\Ppq\Logs;
 use Otsch\Ppq\Ppq;
+use Otsch\Ppq\Utils;
 use Stubs\LogLinesTestJob;
 use Stubs\LogTestJob;
 
 beforeEach(function () {
-    var_dump('before each JobLogTest');
-
     Config::setPath(__DIR__ . '/../_testdata/config/filesystem-ppq.php');
-
-    helper_cleanUpDataPathQueueFiles();
 });
 
 beforeAll(function () {
-    var_dump('before all JobLogTest');
-
     Config::setPath(__DIR__ . '/../_testdata/config/filesystem-ppq.php');
 
     helper_cleanUpDataPathQueueFiles();
 
-    WorkerProcess::work('JobLogTest');
+    WorkerProcess::work();
+
+    $simpleLogTestJob = new QueueRecord('other_queue', LogTestJob::class, id: '1');
+
+    $linesLogTestJob = new QueueRecord('default', LogLinesTestJob::class, id: '2');
+
+    $driver = new FileDriver();
+
+    $driver->add($simpleLogTestJob);
+
+    $driver->add($linesLogTestJob);
+
+    $jobsFinished = Utils::tryUntil(function () use ($simpleLogTestJob, $linesLogTestJob) {
+        return Ppq::find($simpleLogTestJob->id)?->status === QueueJobStatus::finished &&
+            Ppq::find($linesLogTestJob->id)?->status === QueueJobStatus::finished;
+    }, maxTries: 300, sleep: 25000);
+
+    if (!$jobsFinished) {
+        throw new Exception('Log test jobs haven\'t finished yet');
+    }
 });
 
 afterAll(function () {
-    var_dump('after all JobLogTest');
-
     WorkerProcess::stop();
 
     helper_cleanUpDataPathQueueFiles();
 });
 
 it('logs output from queue jobs to a log file in expected path', function () {
-    $job = Dispatcher::queue('other_queue')
-        ->job(LogTestJob::class)
-        ->dispatch();
-
-    helper_tryUntil(function () use ($job) {
-        return count(Ppq::waiting('other_queue')) === 0 &&
-            count(Ppq::running('other_queue')) === 0 &&
-            Ppq::find($job->id)?->status === QueueJobStatus::finished;
-    }, maxTries: 500, sleep: 50000);
-
-    var_dump($job->id);
-
-    var_dump(WorkerProcess::$process?->getOutput());
-
-    expect(Ppq::find($job->id)?->status)->toBe(QueueJobStatus::finished);
+    $job = new QueueRecord('other_queue', LogTestJob::class, id: '1');
 
     $logFilePath = Logs::queueJobLogPath($job);
 
@@ -82,21 +82,7 @@ it('logs output from queue jobs to a log file in expected path', function () {
 });
 
 test('the logs command prints the last 1000 lines by default', function () {
-    $job = Dispatcher::queue('default')
-        ->job(LogLinesTestJob::class)
-        ->dispatch();
-
-    helper_tryUntil(function () use ($job) {
-        return count(Ppq::waiting('default')) === 0 &&
-            count(Ppq::running('default')) === 0 &&
-            Ppq::find($job->id)?->status === QueueJobStatus::finished;
-    }, maxTries: 500, sleep: 50000);
-
-    var_dump($job->id);
-
-    var_dump(WorkerProcess::$process?->getOutput());
-
-    expect(Ppq::find($job->id)?->status)->toBe(QueueJobStatus::finished);
+    $job = new QueueRecord('default', LogLinesTestJob::class, id: '2');
 
     $logCommand = Kernel::ppqCommand('logs ' . $job->id);
 
@@ -108,27 +94,13 @@ test('the logs command prints the last 1000 lines by default', function () {
 
     $logCommandOutputLines = explode(PHP_EOL, $logCommandOutput);
 
-    expect($logCommandOutputLines[0])->toContain('[INFO] 2001');
+    expect($logCommandOutputLines[0])->toContain('[INFO] 501');
 
-    expect($logCommandOutputLines[999])->toContain('[INFO] 3000');
+    expect($logCommandOutputLines[999])->toContain('[INFO] 1500');
 });
 
 test('the logs command prints only the last x lines with --lines parameter', function () {
-    $job = Dispatcher::queue('other_queue')
-        ->job(LogLinesTestJob::class)
-        ->dispatch();
-
-    helper_tryUntil(function () use ($job) {
-        return count(Ppq::waiting('other_queue')) === 0 &&
-            count(Ppq::running('other_queue')) === 0 &&
-            Ppq::find($job->id)?->status === QueueJobStatus::finished;
-    }, maxTries: 500, sleep: 50000);
-
-    var_dump($job->id);
-
-    var_dump(WorkerProcess::$process?->getOutput());
-
-    expect(Ppq::find($job->id)?->status)->toBe(QueueJobStatus::finished);
+    $job = new QueueRecord('default', LogLinesTestJob::class, id: '2');
 
     $logCommand = Kernel::ppqCommand('logs ' . $job->id . ' --lines=10');
 
@@ -140,27 +112,13 @@ test('the logs command prints only the last x lines with --lines parameter', fun
 
     $logCommandOutputLines = explode(PHP_EOL, $logCommandOutput);
 
-    expect($logCommandOutputLines[0])->toContain('[INFO] 2991');
+    expect($logCommandOutputLines[0])->toContain('[INFO] 1491');
 
-    expect($logCommandOutputLines[9])->toContain('[INFO] 3000');
+    expect($logCommandOutputLines[9])->toContain('[INFO] 1500');
 });
 
 test('the logs command prints the whole log with --lines=all', function () {
-    $job = Dispatcher::queue('other_queue')
-        ->job(LogLinesTestJob::class)
-        ->dispatch();
-
-    helper_tryUntil(function () use ($job) {
-        return count(Ppq::waiting('other_queue')) === 0 &&
-            count(Ppq::running('other_queue')) === 0 &&
-            Ppq::find($job->id)?->status === QueueJobStatus::finished;
-    }, maxTries: 500, sleep: 50000);
-
-    var_dump($job->id);
-
-    var_dump(WorkerProcess::$process?->getOutput());
-
-    expect(Ppq::find($job->id)?->status)->toBe(QueueJobStatus::finished);
+    $job = new QueueRecord('default', LogLinesTestJob::class, id: '2');
 
     $logCommand = Kernel::ppqCommand('logs ' . $job->id . ' --lines=all');
 
@@ -174,5 +132,5 @@ test('the logs command prints the whole log with --lines=all', function () {
 
     expect($logCommandOutputLines[0])->toContain('[INFO] 1');
 
-    expect($logCommandOutputLines[2999])->toContain('[INFO] 3000');
+    expect($logCommandOutputLines[1499])->toContain('[INFO] 1500');
 });

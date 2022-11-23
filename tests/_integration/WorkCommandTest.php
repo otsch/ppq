@@ -1,24 +1,32 @@
 <?php
 
+use Integration\WorkerProcess;
 use Otsch\Ppq\Config;
 use Otsch\Ppq\Kernel;
+use Otsch\Ppq\Utils;
 
 it('does not start a second worker process', function () {
     Config::setPath(__DIR__ . '/../_testdata/config/filesystem-ppq.php');
 
-    $firstWorkerProcess = Kernel::ppqCommand('work');
+    WorkerProcess::work();
 
-    $firstWorkerProcess->start();
+    $isWorking = Utils::tryUntil(function () {
+        return \Otsch\Ppq\WorkerProcess::isWorking();
+    });
 
-    usleep(50000);
+    expect($isWorking)->toBeTrue();
 
     $secondWorkerProcess = Kernel::ppqCommand('work');
 
     $secondWorkerProcess->run();
 
-    $firstWorkerProcess->stop(0);
+    WorkerProcess::stop();
 
-    expect($firstWorkerProcess->getOutput())->not()->toContain('Queues are already working');
+    Utils::tryUntil(function () {
+        return \Otsch\Ppq\WorkerProcess::isWorking() === false;
+    });
+
+    expect(\Otsch\Ppq\WorkerProcess::isWorking())->toBeFalse();
 
     expect($secondWorkerProcess->getOutput())->toContain('Queues are already working');
 });

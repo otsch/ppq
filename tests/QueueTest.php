@@ -4,8 +4,9 @@ use Otsch\Ppq\Config;
 use Otsch\Ppq\Entities\QueueRecord;
 use Otsch\Ppq\Entities\Values\QueueJobStatus;
 use Otsch\Ppq\Ppq;
-use Otsch\Ppq\Process;
+use Otsch\Ppq\Processes;
 use Otsch\Ppq\Queue;
+use Otsch\Ppq\Utils;
 use Stubs\TestJob;
 
 beforeEach(function () {
@@ -40,8 +41,8 @@ it('starts a waiting job', function () {
 
     /** @var int $pid */
 
-    helper_tryUntil(function () use ($pid) {
-        return !Process::runningPhpProcessWithPidExists($pid);
+    Utils::tryUntil(function () use ($pid) {
+        return !Processes::pidStillExists($pid);
     });
 
     expect($queue->hasAvailableSlot())->toBeTrue();
@@ -70,13 +71,13 @@ it('knows if there is a slot available for another job', function () {
 
     expect($queue->hasAvailableSlot())->toBeFalse();
 
-    helper_tryUntil(function () use ($queue) {
+    Utils::tryUntil(function () use ($queue) {
         return $queue->runningProcessesCount() < 2;
     });
 
     expect($queue->hasAvailableSlot())->toBeTrue();
 
-    helper_tryUntil(function () use ($queue) {
+    Utils::tryUntil(function () use ($queue) {
         return $queue->runningProcessesCount() === 0;
     });
 
@@ -125,7 +126,7 @@ it('tells you how many processes are currently running', function () {
     // The startWaitingJob() method is not responsible for obeying the limit.
     expect($queue->runningProcessesCount())->toBe(3);
 
-    helper_tryUntil(function () use ($queue) {
+    Utils::tryUntil(function () use ($queue) {
         return $queue->runningProcessesCount() === 0;
     });
 

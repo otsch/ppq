@@ -4,8 +4,10 @@ use Integration\WorkerProcess;
 use Otsch\Ppq\Config;
 use Otsch\Ppq\Drivers\FileDriver;
 use Otsch\Ppq\Entities\QueueRecord;
+use Otsch\Ppq\Entities\Values\QueueJobStatus;
 use Otsch\Ppq\Logs;
 use Otsch\Ppq\Ppq;
+use Otsch\Ppq\Utils;
 use PHPUnit\Framework\TestCase;
 use Stubs\LogLinesTestJob;
 use Stubs\LogTestJob;
@@ -17,11 +19,27 @@ beforeAll(function () {
 
     WorkerProcess::work('LogsTest');
 
-    (new FileDriver())->add(new QueueRecord('default', LogLinesTestJob::class, id: '123abc'));
+    $job = new QueueRecord('default', LogLinesTestJob::class, id: '123abc');
 
-    helper_tryUntil(function () {
-        return count(Ppq::waiting('default')) === 0 && count(Ppq::running('default')) === 0;
-    }, sleep: 50000);
+    (new FileDriver())->add($job);
+
+    $status = Utils::tryUntil(function () use ($job) {
+        $status = Ppq::find($job->id)?->status;
+
+        if (
+            count(Ppq::waiting('default')) === 0 &&
+            count(Ppq::running('default')) === 0 &&
+            $status === QueueJobStatus::finished
+        ) {
+            return $status;
+        };
+
+        return false;
+    }, maxTries: 300, sleep: 50000);
+
+    if ($status !== QueueJobStatus::finished) {
+        throw new Exception('Log job hasn\'t finished yet');
+    }
 
     WorkerProcess::stop();
 });
@@ -37,9 +55,9 @@ it('gets a jobs log and gets the last 1000 lines by default', function () {
 
     expect($logLines)->toHaveCount(1001);
 
-    expect($logLines[0])->toContain('[INFO] 2001');
+    expect($logLines[0])->toContain('[INFO] 501');
 
-    expect($logLines[999])->toContain('[INFO] 3000');
+    expect($logLines[999])->toContain('[INFO] 1500');
 });
 
 it('gets the last x lines when you provide a value for param numberOfLines', function () {
@@ -51,9 +69,9 @@ it('gets the last x lines when you provide a value for param numberOfLines', fun
 
     expect($logLines)->toHaveCount(15);
 
-    expect($logLines[0])->toContain('[INFO] 2987');
+    expect($logLines[0])->toContain('[INFO] 1487');
 
-    expect($logLines[13])->toContain('[INFO] 3000');
+    expect($logLines[13])->toContain('[INFO] 1500');
 });
 
 it('gets the whole log when you set param numberOfLines to null', function () {
@@ -63,11 +81,11 @@ it('gets the whole log when you set param numberOfLines to null', function () {
 
     $logLines = explode(PHP_EOL, $logs);
 
-    expect($logLines)->toHaveCount(3001);
+    expect($logLines)->toHaveCount(1501);
 
     expect($logLines[0])->toContain('[INFO] 1');
 
-    expect($logLines[2999])->toContain('[INFO] 3000');
+    expect($logLines[1499])->toContain('[INFO] 1500');
 });
 
 it('prints a jobs log', function () {
@@ -79,9 +97,9 @@ it('prints a jobs log', function () {
 
     expect($logLines)->toHaveCount(1001);
 
-    expect($logLines[0])->toContain('[INFO] 2001');
+    expect($logLines[0])->toContain('[INFO] 501');
 
-    expect($logLines[999])->toContain('[INFO] 3000');
+    expect($logLines[999])->toContain('[INFO] 1500');
 });
 
 it('tells you the log base path', function () {
@@ -98,6 +116,8 @@ it('forgets the log file for a queue job', function () {
     expect(file_exists(__DIR__ . '/_testdata/datapath/logs/default/' . $job->id . '.log'))->toBeTrue();
 
     Logs::forget($job);
+
+    expect(file_exists(__DIR__ . '/_testdata/datapath/logs/default/' . $job->id . '.log'))->toBeFalse();
 });
 
 it('creates the log dirs if they don\'t exist yet', function () {

@@ -36,9 +36,7 @@ class Logs
 
     public static function logPath(): string
     {
-        $dataPath = self::dataPath();
-
-        $logPath = $dataPath . (!str_ends_with($dataPath, '/') ? '/' : '') . 'logs';
+        $logPath = Ppq::dataPath() . 'logs';
 
         if (!file_exists($logPath)) {
             mkdir($logPath);
@@ -65,16 +63,11 @@ class Logs
 
     public static function forget(QueueRecord $queueRecord): void
     {
-        $path = self::queueLogPath($queueRecord->queue) . '/' . $queueRecord->id;
+        $path = self::queueLogPath($queueRecord->queue) . '/' . $queueRecord->id . '.log';
 
         if (file_exists($path)) {
             unlink($path);
         }
-    }
-
-    protected static function dataPath(): string
-    {
-        return Config::get('datapath');
     }
 
     /**

@@ -152,23 +152,6 @@ class Queue
             return false;
         }
 
-        return Process::runningPhpProcessWithPidExists($queueJob->pid);
-    }
-
-    protected function initLogPath(QueueRecord $queueRecord): void
-    {
-        $dataPath = Config::get('datapath');
-
-        $logsDir = $dataPath . (!str_ends_with($dataPath, '/') ? '/' : '') . 'logs';
-
-        if (!file_exists($logsDir)) {
-            mkdir($logsDir);
-        }
-
-        $queueLogsDir = $logsDir . '/' . $queueRecord->queue;
-
-        if (!file_exists($queueLogsDir)) {
-            mkdir($queueLogsDir);
-        }
+        return Processes::pidStillExists($queueJob->pid);
     }
 }

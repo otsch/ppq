@@ -6,19 +6,19 @@ use Otsch\Ppq\Entities\QueueRecord;
 use Otsch\Ppq\Entities\Values\QueueJobStatus;
 use Otsch\Ppq\Kernel;
 use Otsch\Ppq\Ppq;
-use Otsch\Ppq\Process;
+use Otsch\Ppq\Utils;
 use Stubs\TestJob;
 
 beforeEach(function () {
     Config::setPath(__DIR__ . '/_testdata/config/filesystem-ppq.php');
+
+    helper_cleanUpDataPathQueueFiles();
 });
 
 beforeAll(function () {
     Config::setPath(__DIR__ . '/_testdata/config/filesystem-ppq.php');
 
-    helper_cleanUpDataPathQueueFiles();
-
-    WorkerProcess::work('WorkerTest');
+    WorkerProcess::work();
 });
 
 afterAll(function () {
@@ -26,13 +26,13 @@ afterAll(function () {
 });
 
 it('processes queue jobs', function () {
-    expect(Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']))->toBeTrue();
+    expect(\Otsch\Ppq\WorkerProcess::isWorking())->toBeTrue();
 
     $job = new QueueRecord('default', TestJob::class);
 
     Config::getDriver()->add($job);
 
-    $finishedJob = helper_tryUntil(function () use ($job) {
+    $finishedJob = Utils::tryUntil(function () use ($job) {
         $updatedJob = Config::getDriver()->get($job->id);
 
         if (!$updatedJob) {
@@ -48,7 +48,7 @@ it('processes queue jobs', function () {
 });
 
 it('removes done (finished, failed, lost) jobs that exceed the configured limit of jobs to keep', function () {
-    expect(Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']))->toBeTrue();
+    expect(\Otsch\Ppq\WorkerProcess::isWorking())->toBeTrue();
 
     Config::getDriver()->add(new QueueRecord('default', TestJob::class, QueueJobStatus::finished));
 
@@ -70,7 +70,15 @@ it('removes done (finished, failed, lost) jobs that exceed the configured limit 
 
     Config::getDriver()->add(new QueueRecord('default', TestJob::class, QueueJobStatus::finished));
 
-    usleep(200000);
+    Config::getDriver()->add(new QueueRecord('default', TestJob::class, QueueJobStatus::lost));
+
+    Config::getDriver()->add(new QueueRecord('default', TestJob::class, QueueJobStatus::finished));
+
+    $time = \Otsch\Ppq\WorkerProcess::getTime();
+
+    Utils::tryUntil(function () use ($time) {
+        return \Otsch\Ppq\WorkerProcess::getTime() !== $time;
+    }, sleep: 50000);
 
     $doneJobsCount = 0;
 
@@ -84,23 +92,25 @@ it('removes done (finished, failed, lost) jobs that exceed the configured limit 
 });
 
 it('stops working the queues when it receives the stop signal', function () {
-    expect(Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']))->toBeTrue();
+    expect(\Otsch\Ppq\WorkerProcess::isWorking())->toBeTrue();
 
     $job = new QueueRecord('default', TestJob::class);
 
     Config::getDriver()->add($job);
 
-    helper_tryUntil(function () use ($job) {
+    Utils::tryUntil(function () use ($job) {
         return Config::getDriver()->get($job->id)?->status !== QueueJobStatus::waiting;
     });
 
     Kernel::ppqCommand('stop')->run();
 
-    helper_tryUntil(function () {
-        return Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']) === false;
+    Utils::tryUntil(function () {
+        return \Otsch\Ppq\WorkerProcess::isWorking() === false;
     });
+
+    var_dump(Config::getDriver()->get($job->id)?->status);
 
     expect(Config::getDriver()->get($job->id)?->status)->toBe(QueueJobStatus::finished);
 
-    expect(Process::runningPhpProcessContainingStringsExists([Kernel::ppqPath(), 'work']))->toBeFalse();
+    expect(\Otsch\Ppq\WorkerProcess::isWorking())->toBeFalse();
 });

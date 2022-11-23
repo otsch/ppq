@@ -83,19 +83,6 @@ function helper_cleanUpDataPathQueueFiles(): void
     }
 }
 
-function helper_tryUntil(Closure $callback, mixed $arg = null, int $maxTries = 100, int $sleep = 10000): mixed
-{
-    $tries = 0;
-
-    while (!($callbackReturnValue = $callback($arg)) && $tries < $maxTries) {
-        usleep($sleep);
-
-        $tries++;
-    }
-
-    return $callbackReturnValue;
-}
-
 /**
  * @param string[] $contains
  */
