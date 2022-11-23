@@ -43,11 +43,11 @@ beforeAll(function () {
     if (!$jobsFinished) {
         throw new Exception('Log test jobs haven\'t finished yet');
     }
+
+    WorkerProcess::stop();
 });
 
 afterAll(function () {
-    WorkerProcess::stop();
-
     helper_cleanUpDataPathQueueFiles();
 });
 
