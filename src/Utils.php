@@ -21,4 +21,9 @@ class Utils
 
         return $callbackReturnValue;
     }
+
+    public static function currentMicrosecondsInt(): int
+    {
+        return (int) (microtime(true) * 1000000);
+    }
 }

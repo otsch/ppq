@@ -18,7 +18,8 @@ final class QueueRecord
         public QueueJobStatus $status = QueueJobStatus::waiting,
         public readonly array $args = [],
         public ?int $pid = null,
-        ?string $id = null
+        ?string $id = null,
+        public ?int $doneTime = null,
     ) {
         $this->id = $id ?? uniqid((string) rand(1, 1000000), more_entropy: true);
     }
@@ -44,6 +45,7 @@ final class QueueRecord
             $data['args'] ?? [],
             $data['pid'] ?? null,
             $data['id'] ?? null,
+            $data['doneTime'] ?? null,
         );
     }
 
@@ -59,6 +61,12 @@ final class QueueRecord
             'status' => $this->status->name,
             'args' => $this->args,
             'pid' => $this->pid,
+            'doneTime' => $this->doneTime,
         ];
+    }
+
+    public function setDoneNow(): void
+    {
+        $this->doneTime = (int) (microtime(true) * 1000000);
     }
 }

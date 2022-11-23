@@ -3,6 +3,8 @@
 namespace Otsch\Ppq;
 
 use Exception;
+use Otsch\Ppq\Contracts\QueueDriver;
+use Otsch\Ppq\Entities\QueueRecord;
 use Otsch\Ppq\Entities\Values\QueueJobStatus;
 use Otsch\Ppq\Loggers\EchoLogger;
 use Psr\Log\LoggerInterface;
@@ -195,28 +197,118 @@ class Worker
      */
     private function clearDoneJobs(): void
     {
+        foreach ($this->queues() as $queue) {
+            $this->clearDoneJobsInQueue($queue);
+        }
+    }
+
+    /**
+     * @throws Exceptions\InvalidQueueDriverException
+     */
+    protected function clearDoneJobsInQueue(Queue $queue): void
+    {
         $driver = Config::getDriver();
 
-        foreach ($this->queues() as $queue) {
-            $allQueueRecords = $driver->where($queue->name, status: null);
+        $allQueueRecords = $driver->where($queue->name, status: null);
 
-            if (count($allQueueRecords) <= $queue->keepLastXPastJobs) {
-                continue;
+        if (count($allQueueRecords) <= $queue->keepLastXPastJobs) {
+            return;
+        }
+
+        $doneCount = $this->getDoneCount($allQueueRecords);
+
+        if ($doneCount > $queue->keepLastXPastJobs) {
+            $doneJobs = $this->getSortedDoneJobs($allQueueRecords);
+
+            $this->clearSortedDoneJobs($doneJobs, $doneCount, $driver, $queue);
+        }
+    }
+
+    /**
+     * @param QueueRecord[] $allQueueRecords
+     * @return int
+     */
+    protected function getDoneCount(array $allQueueRecords): int
+    {
+        $count = 0;
+
+        foreach ($allQueueRecords as $queueRecord) {
+            if ($queueRecord->status->isPast()) {
+                $count++;
             }
+        }
 
-            $doneCount = 0;
+        return $count;
+    }
 
-            foreach ($allQueueRecords as $queueRecord) {
-                if ($queueRecord->status->isPast()) {
-                    $doneCount++;
-
-                    if ($doneCount > $queue->keepLastXPastJobs) {
-                        $driver->forget($queueRecord->id);
-
-                        Logs::forget($queueRecord);
+    /**
+     * @param mixed[] $doneJobs
+     */
+    protected function clearSortedDoneJobs(array $doneJobs, int $doneCount, QueueDriver $driver, Queue $queue): void
+    {
+        while ($doneCount > $queue->keepLastXPastJobs) {
+            foreach ($doneJobs as $oldestDoneJobs) {
+                foreach ($oldestDoneJobs as $oldestDoneJob) {
+                    if ($doneCount <= $queue->keepLastXPastJobs) {
+                        break 2;
                     }
+
+                    $driver->forget($oldestDoneJob->id);
+
+                    Logs::forget($oldestDoneJob);
+
+                    $doneCount -= 1;
                 }
             }
         }
+    }
+
+    /**
+     * From all jobs of the queue, get the jobs that are already done (finished, failed, lost).
+     * In order to remove jobs first, that have finished first, deliver an array with the doneTime as key sorted
+     * ascending.
+     * All jobs, that for some reason don't have a doneTime, are probably older than the ones with doneTime, so it
+     * adds them with older doneTimes.
+     *
+     * @param mixed[] $allQueueRecords
+     * @return mixed[]
+     */
+    protected function getSortedDoneJobs(array $allQueueRecords): array
+    {
+        $doneCount = 0;
+
+        $doneJobs = [];
+
+        $olderDoneJobs = [];
+
+        $oldestDoneTime = Utils::currentMicrosecondsInt();
+
+        foreach ($allQueueRecords as $queueRecord) {
+            if ($queueRecord->status->isPast()) {
+                $doneCount++;
+
+                if (!$queueRecord->doneTime) {
+                    $olderDoneJobs[] = $queueRecord;
+                } else {
+                    $doneJobs[$queueRecord->doneTime][] = $queueRecord;
+                }
+
+                if ($queueRecord->doneTime < $oldestDoneTime) {
+                    $oldestDoneTime = $queueRecord->doneTime;
+                }
+            }
+        }
+
+        if (!empty($olderDoneJobs)) {
+            foreach (array_reverse($olderDoneJobs) as $olderDoneJob) {
+                $oldestDoneTime -= 1;
+
+                $doneJobs[$oldestDoneTime][] = $olderDoneJob;
+            }
+        }
+
+        ksort($doneJobs);
+
+        return $doneJobs;
     }
 }
