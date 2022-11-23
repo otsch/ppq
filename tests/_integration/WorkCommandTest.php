@@ -8,7 +8,7 @@ use Otsch\Ppq\Utils;
 it('does not start a second worker process', function () {
     Config::setPath(__DIR__ . '/../_testdata/config/filesystem-ppq.php');
 
-    WorkerProcess::work();
+    WorkerProcess::work('WorkCommandTest');
 
     $isWorking = Utils::tryUntil(function () {
         return \Otsch\Ppq\WorkerProcess::isWorking();

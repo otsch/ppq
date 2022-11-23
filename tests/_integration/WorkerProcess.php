@@ -61,6 +61,8 @@ class WorkerProcess
 
             self::$pid = self::$process->getPid();
 
+            self::logger()->info('Started worker process ' . self::$pid . ' - ' . $startingTest);
+
             if (is_int(self::$pid)) {
                 self::$processCommand = Processes::getCommandByPid(self::$pid);
             }

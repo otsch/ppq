@@ -23,7 +23,7 @@ beforeAll(function () {
 
     helper_cleanUpDataPathQueueFiles();
 
-    WorkerProcess::work();
+    WorkerProcess::work('JobLogTest');
 
     $simpleLogTestJob = new QueueRecord('other_queue', LogTestJob::class, id: '1');
 
