@@ -80,7 +80,13 @@ it('cancels a running job', function () {
 
     expect(helper_containsInOneLine($workerProcessOutput, ['Started job', $job->id]))->toBeTrue();
 
-    expect(helper_containsInOneLine($workerProcessOutput, ['Cancelled running job', $job->id]))->toBeTrue();
+    expect(
+        helper_containsInOneLine($workerProcessOutput, ['Cancelled running job', $job->id]) ||
+        helper_containsInOneLine($workerProcessOutput, [
+            'should have been cancelled, but it looks like it already finished.',
+            $job->id
+        ])
+    )->toBeTrue();
 
     expect(Processes::pidStillExists($job->pid))->toBeFalse();
 });

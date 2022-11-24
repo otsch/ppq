@@ -84,8 +84,10 @@ test('the end of a previously longer content does not remain in a file when a sh
 
     $driver->add($job);
 
+    $strlenId = strlen($job->id);
+
     expect(file_get_contents(__DIR__ . '/../_testdata/datapath/queue-default'))->toBe(
-        'a:1:{s:29:"' . $job->id .'";a:7:{s:2:"id";s:29:"' . $job->id . '";s:5:"queue";' .
+        'a:1:{s:' . $strlenId . ':"' . $job->id .'";a:7:{s:2:"id";s:' . $strlenId .':"' . $job->id . '";s:5:"queue";' .
         's:7:"default";s:8:"jobClass";s:13:"Stubs\TestJob";s:6:"status";s:7:"waiting";s:4:"args";a:0:{}s:3:"pid";N;' .
         's:8:"doneTime";N;}}'
     );
@@ -95,7 +97,7 @@ test('the end of a previously longer content does not remain in a file when a sh
     $driver->update($job);
 
     expect(file_get_contents(__DIR__ . '/../_testdata/datapath/queue-default'))->toBe(
-        'a:1:{s:29:"' . $job->id .'";a:7:{s:2:"id";s:29:"' . $job->id . '";s:5:"queue";' .
+        'a:1:{s:' . $strlenId . ':"' . $job->id .'";a:7:{s:2:"id";s:' . $strlenId .':"' . $job->id . '";s:5:"queue";' .
         's:7:"default";s:8:"jobClass";s:13:"Stubs\TestJob";s:6:"status";s:4:"lost";s:4:"args";a:0:{}s:3:"pid";N;' .
         's:8:"doneTime";N;}}'
     );

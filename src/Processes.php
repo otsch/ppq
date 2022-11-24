@@ -114,10 +114,12 @@ class Processes
 
     public static function isSubProcessOf(int $pid, string $command, int $parentPid, string $parentCommand): bool
     {
-        return $parentCommand === 'sh -c ' . $command &&
+        $splitAtGtGt = explode('>>', $parentCommand);
+
+        $parentCommandWithoutOutputToFile = $splitAtGtGt[0];
+
+        return ($parentCommand === 'sh -c ' . $command || $parentCommandWithoutOutputToFile === 'sh -c ' . $command) &&
             (
-                $pid === $parentPid - 1 ||
-                $pid === $parentPid - 2 ||
                 $pid === $parentPid + 1 ||
                 $pid === $parentPid + 2
             );
