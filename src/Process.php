@@ -19,15 +19,22 @@ class Process
     }
 
     /**
-     * @throws Exception
      * @throws Exceptions\InvalidQueueDriverException
      */
     public function cancel(): void
     {
-        if ($this->process->isRunning()) {
-            $this->cancelRunningProcess();
-        } else {
-            $this->cancelFinishedProcess();
+        try {
+            if ($this->process->isRunning()) {
+                $this->cancelRunningProcess();
+            } else {
+                $this->cancelFinishedProcess();
+            }
+        } catch (Exception $exception) {
+            $this->reloadQueueRecord();
+
+            $this->queueRecord->status = QueueJobStatus::running;
+
+            Config::getDriver()->update($this->queueRecord);
         }
 
         $this->queueRecord->pid = null;
@@ -73,37 +80,43 @@ class Process
     {
         $pid = $this->process->getPid();
 
-//        if ($pid) {
-//            $command = Processes::getCommandByPid($pid);
-//        }
+        if ($pid) {
+            $command = Processes::getCommandByPid($pid);
+        } elseif (!$this->process->isRunning()) {
+            $this->logger->info(
+                'Job ' . $this->queueRecord->id . ' should have been cancelled, but it looks like it already finished.'
+            );
 
-        /** @var int $pid */
+            return;
+        } else {
+            $this->logger->warning(
+                'Can\'t get pid of running process about to being cancelled to look for running sub processes.'
+            );
+
+            return;
+        }
 
         $this->process->stop(0);
-
-        /*if (!empty($command)) {
-            $this->tryToFindAndKillZombieSubProcesses($pid, $command);
-        }
 
         $pidIsGone = Utils::tryUntil(function () use ($pid) {
             return Processes::pidStillExists($pid) === false;
         });
 
         if (!$pidIsGone) {
-            if (!Processes::kill($pid)) {
-                $this->logger->warning(
-                    'Killed running job ' . $this->queueRecord->id . ' (class ' . $this->queueRecord->jobClass .
-                    ', args ' . ListCommand::argsToString($this->queueRecord->args) . ')'
-                );
+            if (Processes::kill($pid)) {
+                $this->logger->warning('Killed running job by pid ' . $this->queueRecord->pid);
             } else {
+                $this->logger->error('Failed to cancel process');
+
                 throw new Exception('Failed to cancel process.');
             }
+        }
+
+        if (!empty($command)) {
+            $this->tryToFindAndKillRunningSubProcesses($pid, $command);
         } else {
-            $this->logger->warning(
-                'Cancelled running job ' . $this->queueRecord->id . ' (class ' . $this->queueRecord->jobClass .
-                ', args ' . ListCommand::argsToString($this->queueRecord->args) . ')'
-            );
-        }*/
+            $this->logger->warning('Can\'t get command of cancelled process to look for running sub processes.');
+        }
 
         $this->logger->warning(
             'Cancelled running job ' . $this->queueRecord->id . ' (class ' . $this->queueRecord->jobClass .
@@ -123,21 +136,29 @@ class Process
         $pid = $this->queueRecord->pid;
 
         if ($pid && Processes::pidStillExists($pid)) {
-            $this->tryToFindAndKillZombieSubProcesses($pid);
-
             $this->process->stop(0);
 
-            if (Processes::pidStillExists($pid)) {
+            if (Processes::pidStillExists($pid)) { // @phpstan-ignore-line
                 if (Processes::kill($pid)) {
-                    $this->logger->warning('Killed job ' . $this->queueRecord->id);
+                    $this->logger->warning(
+                        'Killed pid ' . $pid . ' of job ' . $this->queueRecord->id . ' (class ' .
+                        $this->queueRecord->jobClass . ', args ' . ListCommand::argsToString($this->queueRecord->args) .
+                        ')'
+                    );
                 } else {
                     $this->logger->error('Killing job ' . $this->queueRecord->id . ' failed');
 
                     throw new Exception('Killing job failed.');
                 }
             } else {
-                $this->logger->warning('Stopped job ' . $this->queueRecord->id);
+                $this->logger->warning(
+                    'Stopped job ' . $this->queueRecord->id . ' (class ' .
+                    $this->queueRecord->jobClass . ', args ' . ListCommand::argsToString($this->queueRecord->args) .
+                    ')'
+                );
             }
+
+            $this->tryToFindAndKillRunningSubProcesses($pid);
         } else {
             $this->logger->info(
                 'Job ' . $this->queueRecord->id . ' should have been cancelled, but it looks like it already finished.'
@@ -149,12 +170,16 @@ class Process
         $this->queueRecord->status = QueueJobStatus::finished;
     }
 
-    protected function tryToFindAndKillZombieSubProcesses(int $pid, ?string $command = null): void
+    protected function tryToFindAndKillRunningSubProcesses(int $pid, ?string $command = null): void
     {
         $zombieSubProcess = Processes::findRunningSubProcess($pid, $command);
 
         if ($zombieSubProcess && is_int($zombieSubProcess['pid'])) {
-            Processes::kill($zombieSubProcess['pid']);
+            if (Processes::kill($zombieSubProcess['pid'])) {
+                $this->logger->warning('Killed still running sub-process ' . $zombieSubProcess['pid']);
+            } else {
+                throw new Exception('Failed to kill still running sub-process');
+            }
         }
     }
 

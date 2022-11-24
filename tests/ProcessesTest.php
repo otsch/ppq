@@ -54,7 +54,7 @@ it(
     [123, 'php yolo.php', 121, 'php foo.php', false],
     [123, 'php vendor/bin/ppq list', 125, 'sh -c php vendor/bin/ppq logs 123.abc', false],
     [123, 'php foo.php', 122, 'sh -c php foo.php', true],
-    [123, 'php foo.php', 125, 'sh -c php foo.php', true],
+    [123, 'php foo.php', 125, 'sh -c php foo.php', false],
     [123, 'php foo.php', 126, 'sh -c php foo.php', false],
     [125, 'sh -c php foo.php', 123, 'php foo.php', false],
 ]);
