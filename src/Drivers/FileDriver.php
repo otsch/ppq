@@ -164,6 +164,8 @@ class FileDriver extends AbstractQueueDriver
             }
         }
 
+        ftruncate($handle, 0);
+
         fwrite($handle, serialize($queueData));
     }
 
@@ -210,7 +212,7 @@ class FileDriver extends AbstractQueueDriver
      * @return mixed[]
      * @throws Exception
      */
-    protected function getUnserializedQueueContent(string $queue, mixed $handle = null): array
+    public function getUnserializedQueueContent(string $queue, mixed $handle = null): array
     {
         return $this->getUnserializedFileContent($this->queueFileName($queue), $handle);
     }
