@@ -4,19 +4,19 @@ namespace Otsch\Ppq\Entities\Values;
 
 use Exception;
 
-enum QueueJobStatus
+enum QueueJobStatus: string
 {
-    case waiting;
+    case waiting = 'waiting';
 
-    case running;
+    case running = 'running';
 
-    case finished;
+    case finished = 'finished';
 
-    case failed;
+    case failed = 'failed';
 
-    case lost;
+    case lost = 'lost';
 
-    case cancelled;
+    case cancelled = 'cancelled';
 
     /**
      * @throws Exception
