@@ -4,6 +4,7 @@ use Otsch\Ppq\Config;
 use Otsch\Ppq\Entities\QueueRecord;
 use Otsch\Ppq\Entities\Values\QueueJobStatus;
 use Otsch\Ppq\Process;
+use Otsch\Ppq\QueueEventListeners;
 use PHPUnit\Framework\TestCase;
 use Stubs\TestJob;
 
@@ -24,7 +25,7 @@ it('finishes a process that was successfully finished', function () {
 
     $process = new Process($queueRecord, $process); // @phpstan-ignore-line
 
-    $process->finish();
+    $process->finish(new QueueEventListeners());
 
     expect($queueRecord->status)->toBe(QueueJobStatus::finished);
 
@@ -52,7 +53,7 @@ it('finishes a process that failed', function () {
 
     $process = new Process($queueRecord, $process); // @phpstan-ignore-line
 
-    $process->finish();
+    $process->finish(new QueueEventListeners());
 
     expect($queueRecord->status)->toBe(QueueJobStatus::failed);
 

@@ -65,6 +65,21 @@ return [
              * You should define how many jobs the queue should run in parallel at max.
              */
             'concurrent_jobs' => 2,
+            
+            /**
+             * Optionally define how many past jobs the queue should remember until it forgets (removes)
+             * older past (finished, failed, lost, cancelled) jobs. Default value is 100.
+             */
+            'keep_last_x_past_jobs' => 200,
+            
+            /**
+             * Optionally define event listeners for certain events on this queue (more about this further below).
+             */
+            'listeners' => [
+                'waiting' => WaitingEvent::class,
+                'running' => RunningEvent::class,
+                'finished' => [FinishedEventOne::class, FinishedEventTwo::class],
+            ]
         ],
 
         /**
@@ -268,6 +283,65 @@ Dispatcher::queue('default')
 ```
 
 This will not dispatch the job if another job is currently waiting or running with arg `foo` being `boo`. It won't care about the `bar` argument being different.
+
+### Queue Events
+
+Via the config you can register listeners for queue events. The available events are:
+
+#### waiting
+Listeners for the `waiting` event are called whenever a new job is dispatched to the queue it's listening to.
+
+#### running
+Listeners for the `running` event are called when a queued job is started.
+
+#### finished
+Listeners for the `finished` event are called when a job successfully finished.
+
+#### failed
+Listeners for the `failed` event are called when a job failed for some reason.
+
+#### lost
+Listeners for the `lost` event are called when a queue somehow lost track of a job process. This can happen when the worker process was killed or had an error and the job process died, finished or failed before the worker was restarted.
+
+#### cancelled
+Listeners for the `failed` event are called when a job was manually cancelled.
+
+To add an event listener you need to make a class, implementing the `QueueEventListener` interface:
+
+```php
+use Otsch\Ppq\Contracts\QueueEventListener;
+use Otsch\Ppq\Entities\QueueRecord;
+
+class RunningEventListener implements QueueEventListener
+{
+    public function invoke(QueueRecord $queueRecord): void
+    {
+        // Whatever you want to do when this event occurs.
+    }
+}
+```
+
+And add it to the config, to the queue it should listen to:
+
+```php
+use Otsch\Ppq\Drivers\FileDriver;
+
+return [
+    'datapath' => __DIR__ . '/../data/queue',
+    'queues' => [
+        'default' => [
+            'concurrent_jobs' => 3,
+
+            'listeners' => [
+                'running' => RunningEventListener::class,
+            ]
+        ],
+        'other_queue' => [
+            'concurrent_jobs' => 2,
+        ],
+    ],
+];
+```
 
 ### Scheduling
 

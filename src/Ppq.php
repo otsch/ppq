@@ -26,6 +26,10 @@ class Ppq
         $queueRecord = self::find($id);
 
         if ($queueRecord && !$queueRecord->status->isPast()) {
+            if ($queueRecord->status === QueueJobStatus::waiting) {
+                self::callCancelledListeners($queueRecord);
+            }
+
             $queueRecord->status = QueueJobStatus::cancelled;
 
             Config::getDriver()->update($queueRecord);
@@ -146,5 +150,16 @@ class Ppq
         }
 
         return $waitingQueueRecords;
+    }
+
+    protected static function callCancelledListeners(QueueRecord $queueRecord): void
+    {
+        $queues = Config::getQueues();
+
+        if (isset($queues[$queueRecord->queue])) {
+            $queue = $queues[$queueRecord->queue];
+
+            $queue->eventListeners->callCancelled($queueRecord);
+        }
     }
 }

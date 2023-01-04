@@ -65,6 +65,7 @@ class Config
                 $queueName,
                 $queueConfig['concurrent_jobs'] ?? 2,
                 $queueConfig['keep_last_x_past_jobs'] ?? 100,
+                $queueConfig['listeners'] ?? [],
             );
         }
 
