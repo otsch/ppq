@@ -2,6 +2,7 @@
 
 namespace Otsch\Ppq;
 
+use Exception;
 use Otsch\Ppq\Entities\QueueRecord;
 use Otsch\Ppq\Entities\Values\QueueJobStatus;
 use Otsch\Ppq\Exceptions\InvalidQueueDriverException;
@@ -10,6 +11,8 @@ use Psr\Log\LoggerInterface;
 
 class Queue
 {
+    public QueueEventListeners $eventListeners;
+
     /**
      * @var Process[]
      */
@@ -17,12 +20,21 @@ class Queue
 
     private LoggerInterface $logger;
 
+    /**
+     * @param string $name
+     * @param int $concurrentJobs
+     * @param int $keepLastXPastJobs
+     * @param array<string, array<int, string>> $eventListeners
+     */
     public function __construct(
         public readonly string $name,
         public readonly int $concurrentJobs,
         public readonly int $keepLastXPastJobs,
+        array $eventListeners = [],
     ) {
         $this->logger = new EchoLogger();
+
+        $this->eventListeners = new QueueEventListeners($eventListeners);
     }
 
     /**
@@ -55,16 +67,21 @@ class Queue
 
         Config::getDriver()->update($waitingJob);
 
+        $this->eventListeners->callRunning($waitingJob);
+
         $this->processes[$pid] = new Process($waitingJob, $process);
     }
 
+    /**
+     * @throws InvalidQueueDriverException
+     */
     public function cancelCancelledRunningJobs(): void
     {
         foreach ($this->processes as $pid => $process) {
             $updatedQueueRecord = Ppq::find($process->queueRecord->id);
 
             if ($updatedQueueRecord?->status === QueueJobStatus::cancelled) {
-                $process->cancel();
+                $process->cancel($this->eventListeners);
 
                 unset($this->processes[$pid]);
             }
@@ -73,6 +90,7 @@ class Queue
 
     /**
      * @throws InvalidQueueDriverException
+     * @throws Exception
      */
     public function clearRunningJobs(): void
     {
@@ -123,7 +141,7 @@ class Queue
             if ($process->process->isRunning()) {
                 $pids[$pid] = $pid;
             } else {
-                $process->finish();
+                $process->finish($this->eventListeners);
 
                 unset($this->processes[$pid]);
             }
@@ -145,9 +163,14 @@ class Queue
 
         Config::getDriver()->update($queueJob);
 
+        $this->eventListeners->callLost($queueJob);
+
         $this->logger->warning('Updated status of lost job with id ' . $queueJob->id);
     }
 
+    /**
+     * @throws Exception
+     */
     protected function isJobStillRunning(QueueRecord $queueJob): bool
     {
         if (!$queueJob->pid) {

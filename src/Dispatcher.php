@@ -56,6 +56,8 @@ class Dispatcher
 
         $this->driver->add($record);
 
+        $this->callEventListeners($record);
+
         $this->reset();
 
         return $record;
@@ -138,5 +140,14 @@ class Dispatcher
         $this->jobClassName = '';
 
         $this->args = [];
+    }
+
+    private function callEventListeners(QueueRecord $queueRecord): void
+    {
+        $queues = Config::getQueues();
+
+        if (isset($queues[$this->queueName])) {
+            $queues[$this->queueName]->eventListeners->callWaiting($queueRecord);
+        }
     }
 }

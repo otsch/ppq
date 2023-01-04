@@ -21,7 +21,7 @@ class Process
     /**
      * @throws Exceptions\InvalidQueueDriverException
      */
-    public function cancel(): void
+    public function cancel(QueueEventListeners $eventListeners): void
     {
         try {
             if ($this->process->isRunning()) {
@@ -29,6 +29,14 @@ class Process
             } else {
                 $this->cancelFinishedProcess();
             }
+
+            $this->queueRecord->pid = null;
+
+            $this->queueRecord->setDoneNow();
+
+            Config::getDriver()->update($this->queueRecord);
+
+            $eventListeners->callCancelled($this->queueRecord);
         } catch (Exception $exception) {
             $this->reloadQueueRecord();
 
@@ -36,15 +44,9 @@ class Process
 
             Config::getDriver()->update($this->queueRecord);
         }
-
-        $this->queueRecord->pid = null;
-
-        $this->queueRecord->setDoneNow();
-
-        Config::getDriver()->update($this->queueRecord);
     }
 
-    public function finish(): void
+    public function finish(QueueEventListeners $eventListeners): void
     {
         $this->reloadQueueRecord();
 
@@ -61,8 +63,12 @@ class Process
         Config::getDriver()->update($this->queueRecord);
 
         if ($status === QueueJobStatus::finished) {
+            $eventListeners->callFinished($this->queueRecord);
+
             $this->logger->info('Finished job with id ' . $this->queueRecord->id);
         } else {
+            $eventListeners->callFailed($this->queueRecord);
+
             $this->logger->error('Job with id ' . $this->queueRecord->id . ' failed');
 
             if (!empty($this->process->getErrorOutput())) {
