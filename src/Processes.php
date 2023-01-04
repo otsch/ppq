@@ -176,6 +176,10 @@ class Processes
     {
         $command = self::runCommand('kill -9 ' . $pid);
 
+        Utils::tryUntil(function () use ($pid) {
+            return !self::pidStillExists($pid);
+        });
+
         return $command->isSuccessful() && !self::pidStillExists($pid);
     }
 
