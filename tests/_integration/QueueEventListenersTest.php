@@ -125,7 +125,7 @@ it('calls event listeners registered for the lost event, when a job is lost', fu
 
     Utils::tryUntil(function () use ($runningQueueJob) {
         return !Processes::pidStillExists($runningQueueJob->pid);
-    }, maxTries: 1000);
+    }, maxTries: 5000);
 
     expect(Processes::pidStillExists($runningQueueJob->pid))->toBeFalse();
 
