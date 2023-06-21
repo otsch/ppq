@@ -60,4 +60,11 @@ class SimpleInMemoryDriver extends AbstractQueueDriver
             }
         }
     }
+
+    public function flush(string $queue): void
+    {
+        if (isset($this->queue[$queue])) {
+            $this->queue[$queue] = [];
+        }
+    }
 }

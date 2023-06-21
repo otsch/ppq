@@ -34,4 +34,9 @@ interface QueueDriver
      * Remove all QueueRecords of status waiting from a certain queue.
      */
     public function clear(string $queue): void;
+
+    /**
+     * Completely empty a certain queue.
+     */
+    public function flush(string $queue): void;
 }
