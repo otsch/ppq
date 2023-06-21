@@ -5,7 +5,7 @@ use PHPUnit\Framework\TestCase;
 
 function helper_testLogFilePath(): string
 {
-    return __DIR__ . '/../_testdata/datapath/logfile';
+    return helper_testDataPath('logfile');
 }
 
 function helper_getLogFileContent(): string

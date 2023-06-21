@@ -4,10 +4,10 @@ use Otsch\Ppq\Config;
 use Otsch\Ppq\Signal;
 
 beforeEach(function () {
-    Config::setPath(__DIR__ . '/_testdata/config/ppq.php');
+    Config::setPath(helper_testConfigPath('ppq.php'));
 
-    if (file_exists(__DIR__ . '/_testdata/datapath/signal')) {
-        file_put_contents(__DIR__ . '/_testdata/datapath/signal', '');
+    if (file_exists(helper_testDataPath('signal'))) {
+        file_put_contents(helper_testDataPath('signal'), '');
     }
 });
 

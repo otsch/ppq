@@ -15,7 +15,7 @@ use Stubs\TestJob;
 /** @var TestCase $this */
 
 beforeEach(function () {
-    Config::setPath(__DIR__ . '/_testdata/config/ppq.php');
+    Config::setPath(helper_testConfigPath('ppq.php'));
 });
 
 it('returns an existing ppqPath', function () {

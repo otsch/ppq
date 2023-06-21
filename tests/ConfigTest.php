@@ -9,7 +9,7 @@ use Stubs\SimpleInMemoryDriver;
 
 function helper_configFilePath(string $configFile = 'min.php'): string
 {
-    return __DIR__ . '/_testdata/config/' . $configFile;
+    return helper_testConfigPath($configFile);
 }
 
 test(

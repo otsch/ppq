@@ -8,7 +8,7 @@ use Stubs\OtherTestJob;
 use Stubs\TestJob;
 
 beforeEach(function () {
-    Config::setPath(__DIR__ . '/../_testdata/config/ppq.php');
+    Config::setPath(helper_testConfigPath('ppq.php'));
 
     helper_cleanUpDataPathQueueFiles();
 });
@@ -76,7 +76,7 @@ it('updates a job in the queue', function () {
 });
 
 test('the end of a previously longer content does not remain in a file when a shorter content is written', function () {
-    expect(file_get_contents(__DIR__ . '/../_testdata/datapath/queue-default'))->toBe('a:0:{}');
+    expect(file_get_contents(helper_testDataPath('queue-default')))->toBe('a:0:{}');
 
     $driver = new FileDriver();
 
@@ -86,7 +86,7 @@ test('the end of a previously longer content does not remain in a file when a sh
 
     $strlenId = strlen($job->id);
 
-    expect(file_get_contents(__DIR__ . '/../_testdata/datapath/queue-default'))->toBe(
+    expect(file_get_contents(helper_testDataPath('queue-default')))->toBe(
         'a:1:{s:' . $strlenId . ':"' . $job->id .'";a:7:{s:2:"id";s:' . $strlenId .':"' . $job->id . '";s:5:"queue";' .
         's:7:"default";s:8:"jobClass";s:13:"Stubs\TestJob";s:6:"status";s:7:"waiting";s:4:"args";a:0:{}s:3:"pid";N;' .
         's:8:"doneTime";N;}}'
@@ -96,11 +96,35 @@ test('the end of a previously longer content does not remain in a file when a sh
 
     $driver->update($job);
 
-    expect(file_get_contents(__DIR__ . '/../_testdata/datapath/queue-default'))->toBe(
+    expect(file_get_contents(helper_testDataPath('queue-default')))->toBe(
         'a:1:{s:' . $strlenId . ':"' . $job->id .'";a:7:{s:2:"id";s:' . $strlenId .':"' . $job->id . '";s:5:"queue";' .
         's:7:"default";s:8:"jobClass";s:13:"Stubs\TestJob";s:6:"status";s:4:"lost";s:4:"args";a:0:{}s:3:"pid";N;' .
         's:8:"doneTime";N;}}'
     );
+});
+
+test('there are also no remainders in the index file, e.g. when flushing a queue', function () {
+    expect(file_get_contents(helper_testDataPath('index')))->toBe('a:0:{}');
+
+    $driver = new FileDriver();
+
+    $job = new QueueRecord('default', TestJob::class);
+
+    $driver->add($job);
+
+    $contentAfterAdd = file_get_contents(helper_testDataPath('index'));
+
+    if (!$contentAfterAdd) {
+        $contentAfterAdd = '';
+    }
+
+    expect(strlen($contentAfterAdd))->toBeGreaterThan(10);
+
+    $driver->flush('default');
+
+    $contentAfterFlush = file_get_contents(helper_testDataPath('index'));
+
+    expect($contentAfterFlush)->toBe('a:0:{}');
 });
 
 it('forgets a job', function () {

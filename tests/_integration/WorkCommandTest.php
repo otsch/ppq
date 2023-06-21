@@ -6,7 +6,7 @@ use Otsch\Ppq\Kernel;
 use Otsch\Ppq\Utils;
 
 it('does not start a second worker process', function () {
-    Config::setPath(__DIR__ . '/../_testdata/config/filesystem-ppq.php');
+    Config::setPath(helper_testConfigPath('filesystem-ppq.php'));
 
     WorkerProcess::work();
 

@@ -2,13 +2,12 @@
 
 namespace Stubs\Listeners;
 
-use Otsch\Ppq\Contracts\QueueEventListener;
 use Otsch\Ppq\Entities\QueueRecord;
 
-class DefaultWaiting implements QueueEventListener
+class DefaultWaiting extends TestQueueEventListener
 {
     public function invoke(QueueRecord $queueRecord): void
     {
-        file_put_contents(__DIR__ . '/../../_testdata/datapath/event-listeners-check-file', 'default waiting called');
+        file_put_contents($this->dataPath('event-listeners-check-file'), 'default waiting called');
     }
 }

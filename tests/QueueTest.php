@@ -10,7 +10,7 @@ use Otsch\Ppq\Utils;
 use Stubs\TestJob;
 
 beforeEach(function () {
-    Config::setPath(__DIR__ . '/_testdata/config/filesystem-ppq.php');
+    Config::setPath(helper_testConfigPath('filesystem-ppq.php'));
 
     helper_cleanUpDataPathQueueFiles();
 });
