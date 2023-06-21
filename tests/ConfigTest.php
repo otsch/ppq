@@ -15,9 +15,10 @@ function helper_configFilePath(string $configFile = 'min.php'): string
 test(
     'by default it looks for the config file in /../../../../config/ppq.php from the src dir of this package',
     function () {
-        Config::get('something');
+        expect(realpath(Config::getPath()))
+            ->toBe(realpath(__DIR__ . '/../../../../config/ppq.php'));
     }
-)->expectErrorMessageMatches('/require.+src\/\.\.\/\.\.\/\.\.\/\.\.\/config\/ppq\.php\): Failed to open/');
+);
 
 it('looks for the config file in the path you set via the setPath() method', function () {
     Config::setPath(helper_configFilePath());
