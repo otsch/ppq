@@ -181,6 +181,22 @@ You can also clear all configured queues:
 php vendor/bin/ppq clear-all
 ```
 
+#### Flushing Queues
+
+If you want to not only remove waiting queue jobs but completely empty a queue (even remove all running, done, failed, cancelled and lost jobs), you can flush the queue:
+
+```bash
+php vendor/bin/ppq flush queue_name
+```
+
+__Attention:__ This doesn't cancel running jobs, it just removes all entries from the queue!
+
+You can also flush all configured queues:
+
+```bash
+php vendor/bin/ppq flush-all
+```
+
 #### Calling the Scheduler to start due Jobs
 
 ```bash

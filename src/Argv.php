@@ -39,7 +39,17 @@ class Argv
         return isset($this->argv[1]) && $this->argv[1] === 'clear-all';
     }
 
-    public function queueToClear(): ?string
+    public function flushQueue(): bool
+    {
+        return isset($this->argv[1]) && $this->argv[1] === 'flush';
+    }
+
+    public function flushAllQueues(): bool
+    {
+        return isset($this->argv[1]) && $this->argv[1] === 'flush-all';
+    }
+
+    public function subjectQueue(): ?string
     {
         return $this->argv[2] ?? null;
     }

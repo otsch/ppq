@@ -50,6 +50,20 @@ class Ppq
         }
     }
 
+    public static function flush(string $queueName): void
+    {
+        if (in_array($queueName, self::queueNames(), true)) {
+            Config::getDriver()->flush($queueName);
+        }
+    }
+
+    public static function flushAll(): void
+    {
+        foreach (self::queueNames() as $queueName) {
+            Config::getDriver()->flush($queueName);
+        }
+    }
+
     /**
      * @return QueueRecord[]
      * @throws Exceptions\InvalidQueueDriverException
