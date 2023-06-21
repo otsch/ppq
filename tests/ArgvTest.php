@@ -29,18 +29,48 @@ test('clearQueue() returns true when the second argv array element is "clear"', 
     [true, ['vendor/bin/ppq', 'clear', 'foo']],
 ]);
 
-test('clearAllQueues() returns true when the second argv array element is "clear-all"', function (bool $expect, array $argv) {
-    expect(Argv::make($argv)->clearAllQueues())->toBe($expect);
-})->with([
+test(
+    'clearAllQueues() returns true when the second argv array element is "clear-all"',
+    function (bool $expect, array $argv) {
+        expect(Argv::make($argv)->clearAllQueues())->toBe($expect);
+    }
+)->with([
     [true, ['vendor/bin/ppq', 'clear-all']],
     [false, ['vendor/bin/ppq', 'foo']],
     [false, ['vendor/bin/ppq', 'foo', 'clear-all']],
     [true, ['vendor/bin/ppq', 'clear-all', 'foo']],
 ]);
 
-test('it gets the queue to clear from the third argv argument', function (array $argv, string $queueName) {
-    expect(Argv::make($argv)->queueToClear())->toBe($queueName);
-})->with([
+test(
+    'flushQueue() returns true when the second argv array element is "flush"',
+    function (bool $expect, array $argv) {
+        expect(Argv::make($argv)->flushQueue())->toBe($expect);
+    }
+)->with([
+    [true, ['vendor/bin/ppq', 'flush']],
+    [false, ['vendor/bin/ppq', 'foo']],
+    [false, ['vendor/bin/ppq', 'foo', 'flush']],
+    [true, ['vendor/bin/ppq', 'flush', 'foo']],
+]);
+
+test(
+    'flushAllQueues() returns true when the second argv array element is "flush-all"',
+    function (bool $expect, array $argv) {
+        expect(Argv::make($argv)->flushAllQueues())->toBe($expect);
+    }
+)->with([
+    [true, ['vendor/bin/ppq', 'flush-all']],
+    [false, ['vendor/bin/ppq', 'foo']],
+    [false, ['vendor/bin/ppq', 'foo', 'flush-all']],
+    [true, ['vendor/bin/ppq', 'flush-all', 'foo']],
+]);
+
+it(
+    'gets the subject queue (for clear or flush) from the third argv argument',
+    function (array $argv, string $queueName) {
+        expect(Argv::make($argv)->subjectQueue())->toBe($queueName);
+    }
+)->with([
     [['vendor/bin/ppq', 'clear', 'default'], 'default'],
     [['vendor/bin/ppq', 'clear', '*'], '*'],
     [['vendor/bin/ppq', 'clear', 'foo', 'bar'], 'foo'],

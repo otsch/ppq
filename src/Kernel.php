@@ -78,6 +78,10 @@ class Kernel
             $this->clearQueue();
         } elseif ($this->argv->clearAllQueues()) {
             $this->clearAllQueues();
+        } elseif ($this->argv->flushQueue()) {
+            $this->flushQueue();
+        } elseif ($this->argv->flushAllQueues()) {
+            $this->flushAllQueues();
         }
     }
 
@@ -156,7 +160,7 @@ class Kernel
 
     protected function clearQueue(): void
     {
-        $queueToClear = $this->argv->queueToClear();
+        $queueToClear = $this->argv->subjectQueue();
 
         if (!$queueToClear) {
             $this->logger->error('You must define which queue you want to clear. Use * to clear all queues.');
@@ -175,11 +179,33 @@ class Kernel
         $this->logger->info('Cleared queue ' . $queueToClear);
     }
 
+    protected function flushQueue(): void
+    {
+        $queue = $this->argv->subjectQueue();
+
+        if (!$queue || !in_array($queue, Config::getQueueNames(), true)) {
+            $this->logger->error('You must define which queue you want to flush.');
+
+            return;
+        }
+
+        Ppq::flush($queue);
+
+        $this->logger->info('Flushed queue ' . $queue);
+    }
+
     protected function clearAllQueues(): void
     {
         Ppq::clearAll();
 
         $this->logger->info('Cleared all queues');
+    }
+
+    protected function flushAllQueues(): void
+    {
+        Ppq::flushAll();
+
+        $this->logger->info('Flushed all queues');
     }
 
     protected function showLog(): void
