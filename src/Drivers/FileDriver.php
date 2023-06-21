@@ -107,29 +107,20 @@ class FileDriver extends AbstractQueueDriver
         $this->releaseLockAndCloseHandle($indexFileHandle);
     }
 
+    /**
+     * @throws Exception
+     */
     public function clear(string $queue): void
     {
-        [$queueFileHandle, $indexFileHandle] = $this->openAndLockQueueAndIndexFiles($queue);
+        $this->forgetAllFromQueue($queue, QueueJobStatus::waiting);
+    }
 
-        $index = $this->getIndex($indexFileHandle);
-
-        $queue = $this->getQueue($queue, $queueFileHandle);
-
-        foreach ($queue as $id => $queueRecord) {
-            if ($queueRecord->status === QueueJobStatus::waiting) {
-                unset($queue[$id]);
-
-                unset($index[$id]);
-            }
-        }
-
-        $this->saveQueue($queue, $queueFileHandle);
-
-        $this->saveIndex($index, $indexFileHandle);
-
-        $this->releaseLockAndCloseHandle($queueFileHandle);
-
-        $this->releaseLockAndCloseHandle($indexFileHandle);
+    /**
+     * @throws Exception
+     */
+    public function flush(string $queue): void
+    {
+        $this->forgetAllFromQueue($queue);
     }
 
     /**
@@ -181,6 +172,34 @@ class FileDriver extends AbstractQueueDriver
         }
 
         $this->saveQueue($queueData, $queueHandle);
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function forgetAllFromQueue(string $queue, ?QueueJobStatus $status = null): void
+    {
+        [$queueFileHandle, $indexFileHandle] = $this->openAndLockQueueAndIndexFiles($queue);
+
+        $index = $this->getIndex($indexFileHandle);
+
+        $queue = $this->getQueue($queue, $queueFileHandle);
+
+        foreach ($queue as $id => $queueRecord) {
+            if (!$status || $queueRecord->status === $status) {
+                unset($queue[$id]);
+
+                unset($index[$id]);
+            }
+        }
+
+        $this->saveQueue($queue, $queueFileHandle);
+
+        $this->saveIndex($index, $indexFileHandle);
+
+        $this->releaseLockAndCloseHandle($queueFileHandle);
+
+        $this->releaseLockAndCloseHandle($indexFileHandle);
     }
 
     /**

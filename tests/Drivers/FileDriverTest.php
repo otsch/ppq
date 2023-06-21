@@ -218,9 +218,35 @@ it('clears a queue', function () {
 
     $driver->add(new QueueRecord('other_queue', TestJob::class));
 
+    $driver->add(new QueueRecord('other_queue', TestJob::class, QueueJobStatus::running));
+
+    $driver->add(new QueueRecord('other_queue', TestJob::class, QueueJobStatus::finished));
+
     expect($driver->where('other_queue', status: QueueJobStatus::waiting))->toHaveCount(3);
 
     $driver->clear('other_queue');
 
     expect($driver->where('other_queue', status: QueueJobStatus::waiting))->toHaveCount(0);
+});
+
+it('flushes a queue', function () {
+    $driver = new FileDriver();
+
+    $driver->add(new QueueRecord('tasks', TestJob::class, QueueJobStatus::waiting));
+
+    $driver->add(new QueueRecord('tasks', TestJob::class, QueueJobStatus::running));
+
+    $driver->add(new QueueRecord('tasks', TestJob::class, QueueJobStatus::finished));
+
+    $driver->add(new QueueRecord('tasks', TestJob::class, QueueJobStatus::failed));
+
+    $driver->add(new QueueRecord('tasks', TestJob::class, QueueJobStatus::cancelled));
+
+    $driver->add(new QueueRecord('tasks', TestJob::class, QueueJobStatus::lost));
+
+    expect($driver->where('tasks', status: null))->toHaveCount(6);
+
+    $driver->flush('tasks');
+
+    expect($driver->where('tasks', status: null))->toHaveCount(0);
 });
