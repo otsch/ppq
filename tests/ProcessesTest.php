@@ -4,7 +4,7 @@ use Otsch\Ppq\Processes;
 
 it('checks if a running process with a certain pid exists', function () {
     $process = \Symfony\Component\Process\Process::fromShellCommandline(
-        'php ' . __DIR__ . '/_testdata/scripts/do-something.php'
+        'php ' . helper_testScriptPath('do-something.php')
     );
 
     $process->start();
@@ -26,7 +26,7 @@ it('checks if a running process containing certain strings (in command) exists',
     expect(Processes::processContainingStringsExists(['counting.php']))->toBeFalse();
 
     $process = \Symfony\Component\Process\Process::fromShellCommandline(
-        'php ' . __DIR__ . '/_testdata/scripts/counting.php'
+        'php ' . helper_testScriptPath('counting.php')
     );
 
     $process->start();
@@ -36,7 +36,7 @@ it('checks if a running process containing certain strings (in command) exists',
 
 test('checking if a running process containing certain strings exists, exclude the current process', function () {
     $process = \Symfony\Component\Process\Process::fromShellCommandline(
-        'php ' . __DIR__ . '/_testdata/scripts/check-process-already-running.php'
+        'php ' . helper_testScriptPath('check-process-already-running.php')
     );
 
     $process->run();

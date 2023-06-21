@@ -11,7 +11,7 @@ use Stubs\TestJob;
 /** @var TestCase $this */
 
 it('finishes a process that was successfully finished', function () {
-    Config::setPath(__DIR__ . '/_testdata/config/ppq.php');
+    Config::setPath(helper_testConfigPath('ppq.php'));
 
     $queueRecord = new QueueRecord('default', TestJob::class);
 
@@ -35,7 +35,7 @@ it('finishes a process that was successfully finished', function () {
 });
 
 it('finishes a process that failed', function () {
-    Config::setPath(__DIR__ . '/_testdata/config/ppq.php');
+    Config::setPath(helper_testConfigPath('ppq.php'));
 
     $queueRecord = new QueueRecord('default', TestJob::class, QueueJobStatus::running);
 

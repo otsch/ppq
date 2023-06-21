@@ -13,7 +13,7 @@ use Stubs\LogLinesTestJob;
 use Stubs\LogTestJob;
 
 beforeAll(function () {
-    Config::setPath(__DIR__ . '/_testdata/config/filesystem-ppq.php');
+    Config::setPath(helper_testConfigPath('filesystem-ppq.php'));
 
     helper_cleanUpDataPathQueueFiles();
 
@@ -103,21 +103,21 @@ it('prints a jobs log', function () {
 });
 
 it('tells you the log base path', function () {
-    expect(realpath(Logs::logPath()))->toBe(__DIR__ . '/_testdata/datapath/logs');
+    expect(realpath(Logs::logPath()))->toBe(helper_testDataPath('logs'));
 });
 
 it('tells you the log path for a certain queue', function () {
-    expect(Logs::queueLogPath('other_queue'))->toBe(__DIR__ . '/_testdata/config/../datapath/logs/other_queue');
+    expect(realpath(Logs::queueLogPath('other_queue')))->toBe(helper_testDataPath('logs/other_queue'));
 });
 
 it('forgets the log file for a queue job', function () {
     $job = new QueueRecord('default', LogTestJob::class, id: '123abc');
 
-    expect(file_exists(__DIR__ . '/_testdata/datapath/logs/default/' . $job->id . '.log'))->toBeTrue();
+    expect(file_exists(helper_testDataPath('logs/default/' . $job->id . '.log')))->toBeTrue();
 
     Logs::forget($job);
 
-    expect(file_exists(__DIR__ . '/_testdata/datapath/logs/default/' . $job->id . '.log'))->toBeFalse();
+    expect(file_exists(helper_testDataPath('logs/default/' . $job->id . '.log')))->toBeFalse();
 });
 
 it('creates the log dirs if they don\'t exist yet', function () {

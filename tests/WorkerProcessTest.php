@@ -5,7 +5,7 @@ use Otsch\Ppq\Ppq;
 use Otsch\Ppq\WorkerProcess;
 
 beforeEach(function () {
-    Config::setPath(__DIR__ . '/_testdata/config/filesystem-ppq.php');
+    Config::setPath(helper_testConfigPath('filesystem-ppq.php'));
 
     if (file_exists(Ppq::dataPath('workerprocess'))) {
         unlink(Ppq::dataPath('workerprocess'));

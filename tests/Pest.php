@@ -39,46 +39,73 @@
 |
 */
 
+function helper_testDataPath(string $withinPath = ''): string
+{
+    if (!empty($withinPath)) {
+        $withinPath = str_starts_with($withinPath, '/') ? $withinPath : '/' . $withinPath;
+    }
+
+    return __DIR__ . '/_testdata/datapath' . $withinPath;
+}
+
+function helper_testConfigPath(string $withinPath = ''): string
+{
+    if (!empty($withinPath)) {
+        $withinPath = str_starts_with($withinPath, '/') ? $withinPath : '/' . $withinPath;
+    }
+
+    return __DIR__ . '/_testdata/config' . $withinPath;
+}
+
+function helper_testScriptPath(string $withinPath = ''): string
+{
+    if (!empty($withinPath)) {
+        $withinPath = str_starts_with($withinPath, '/') ? $withinPath : '/' . $withinPath;
+    }
+
+    return __DIR__ . '/_testdata/scripts' . $withinPath;
+}
+
 function helper_cleanUpDataPathQueueFiles(): void
 {
-    if (file_exists(__DIR__ . '/_testdata/datapath/index')) {
-        file_put_contents(__DIR__ . '/_testdata/datapath/index', 'a:0:{}');
+    if (file_exists(helper_testDataPath('index'))) {
+        file_put_contents(helper_testDataPath('index'), 'a:0:{}');
     }
 
-    if (file_exists(__DIR__ . '/_testdata/datapath/queue-default')) {
-        file_put_contents(__DIR__ . '/_testdata/datapath/queue-default', 'a:0:{}');
+    if (file_exists(helper_testDataPath('queue-default'))) {
+        file_put_contents(helper_testDataPath('queue-default'), 'a:0:{}');
     }
 
-    if (file_exists(__DIR__ . '/_testdata/datapath/queue-other_queue')) {
-        file_put_contents(__DIR__ . '/_testdata/datapath/queue-other_queue', 'a:0:{}');
+    if (file_exists(helper_testDataPath('queue-other_queue'))) {
+        file_put_contents(helper_testDataPath('queue-other_queue'), 'a:0:{}');
     }
 
-    if (file_exists(__DIR__ . '/_testdata/datapath/queue-infinite_waiting_jobs_queue')) {
-        file_put_contents(__DIR__ . '/_testdata/datapath/queue-infinite_waiting_jobs_queue', 'a:0:{}');
+    if (file_exists(helper_testDataPath('queue-infinite_waiting_jobs_queue'))) {
+        file_put_contents(helper_testDataPath('queue-infinite_waiting_jobs_queue'), 'a:0:{}');
     }
 
     // clean up logs
-    if (file_exists(__DIR__ . '/_testdata/datapath/logs')) {
+    if (file_exists(helper_testDataPath('logs'))) {
         $queues = ['default', 'other_queue', 'infinite_waiting_jobs_queue'];
 
         foreach ($queues as $queue) {
-            if (file_exists(__DIR__ . '/_testdata/datapath/logs/' . $queue)) {
-                $filesInDir = scandir(__DIR__ . '/_testdata/datapath/logs/' . $queue);
+            if (file_exists(helper_testDataPath('logs/' . $queue))) {
+                $filesInDir = scandir(helper_testDataPath('logs/' . $queue));
 
                 if (is_array($filesInDir)) {
                     foreach ($filesInDir as $file) {
                         if (str_ends_with($file, '.log')) {
-                            unlink(__DIR__ . '/_testdata/datapath/logs/' . $queue . '/' . $file);
+                            unlink(helper_testDataPath('logs/' . $queue . '/' . $file));
                         }
                     }
                 }
 
-                rmdir(__DIR__ . '/_testdata/datapath/logs/' . $queue);
+                rmdir(helper_testDataPath('logs/' . $queue));
             }
         }
 
-        if (file_exists(__DIR__ . '/_testdata/datapath/logs')) {
-            rmdir(__DIR__ . '/_testdata/datapath/logs');
+        if (file_exists(helper_testDataPath('logs'))) {
+            rmdir(helper_testDataPath('logs'));
         }
     }
 }

@@ -14,12 +14,12 @@ use Stubs\TestJobPhpError;
 use Stubs\TestJobThrowingException;
 
 beforeAll(function () {
-    Config::setPath(__DIR__ . '/../_testdata/config/event-listeners.php');
+    Config::setPath(helper_testConfigPath('event-listeners.php'));
 
-    if (!file_exists(__DIR__ . '/../_testdata/datapath/event-listeners-check-file')) {
-        touch(__DIR__ . '/../_testdata/datapath/event-listeners-check-file');
+    if (!file_exists(helper_testDataPath('event-listeners-check-file'))) {
+        touch(helper_testDataPath('event-listeners-check-file'));
     } else {
-        file_put_contents(__DIR__ . '/../_testdata/datapath/event-listeners-check-file', '');
+        file_put_contents(helper_testDataPath('event-listeners-check-file'), '');
     }
 
     helper_cleanUpDataPathQueueFiles();
@@ -28,9 +28,9 @@ beforeAll(function () {
 });
 
 beforeEach(function () {
-    Config::setPath(__DIR__ . '/../_testdata/config/event-listeners.php');
+    Config::setPath(helper_testConfigPath('event-listeners.php'));
 
-    file_put_contents(__DIR__ . '/../_testdata/datapath/event-listeners-check-file', '');
+    file_put_contents(helper_testDataPath('event-listeners-check-file'), '');
 });
 
 afterAll(function () {
@@ -41,7 +41,7 @@ afterAll(function () {
 
 function helper_getListenerCheckFileContent(): string
 {
-    $fileContent = file_get_contents(__DIR__ . '/../_testdata/datapath/event-listeners-check-file');
+    $fileContent = file_get_contents(helper_testDataPath('event-listeners-check-file'));
 
     if ($fileContent === false) {
         return '';

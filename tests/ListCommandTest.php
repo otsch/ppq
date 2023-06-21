@@ -11,9 +11,9 @@ use Stubs\TestJob;
 
 it('lists all the waiting and running jobs in all queues', function () {
     // temporarily switch config, so the driver instance is reset.
-    Config::setPath(__DIR__ . '/_testdata/config/min.php');
+    Config::setPath(helper_testConfigPath('min.php'));
 
-    Config::setPath(__DIR__ . '/_testdata/config/ppq.php');
+    Config::setPath(helper_testConfigPath('ppq.php'));
 
     $driver = Config::getDriver();
 

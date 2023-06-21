@@ -293,6 +293,8 @@ class FileDriver extends AbstractQueueDriver
      */
     protected function saveIndex(array $index, mixed $handle): void
     {
+        ftruncate($handle, 0);
+
         fwrite($handle, serialize($index));
     }
 
