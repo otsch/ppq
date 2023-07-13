@@ -116,7 +116,7 @@ class Processes
     {
         $splitAtGtGt = explode('>>', $parentCommand);
 
-        $parentCommandWithoutOutputToFile = $splitAtGtGt[0];
+        $parentCommandWithoutOutputToFile = trim($splitAtGtGt[0]);
 
         return ($parentCommand === 'sh -c ' . $command || $parentCommandWithoutOutputToFile === 'sh -c ' . $command) &&
             (
