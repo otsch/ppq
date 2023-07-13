@@ -57,6 +57,7 @@ it(
     [123, 'php foo.php', 125, 'sh -c php foo.php', false],
     [123, 'php foo.php', 126, 'sh -c php foo.php', false],
     [125, 'sh -c php foo.php', 123, 'php foo.php', false],
+    [123, 'php foo.php', 122, 'sh -c php foo.php >> /path/to/123.log 2>&1', true],
 ]);
 
 it(
