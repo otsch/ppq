@@ -67,9 +67,11 @@ it('handles a PHP warning', function () {
 
     $handlerEvents = file_get_contents(helper_testDataPath('error-handler-events'));
 
+    helper_dump(file_exists(helper_testDataPath('error-handler-events')));
+
     expect($job?->status)->toBe(QueueJobStatus::finished)
         ->and($handlerEvents)->toContain('PHP Warning: unserialize(): Error at offset 0 of 3 bytes');
-});
+})->only();
 
 it('handles a PHP error', function () {
     $job = Dispatcher::queue('default')
