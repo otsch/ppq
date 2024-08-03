@@ -60,7 +60,7 @@ it('handles a PHP warning', function () {
         ->dispatch();
 
     Utils::tryUntil(function () use ($job) {
-        return Ppq::find($job->id)?->status === QueueJobStatus::failed;
+        return Ppq::find($job->id)?->status === QueueJobStatus::finished;
     });
 
     $job = Ppq::find($job->id);
