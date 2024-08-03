@@ -11,6 +11,6 @@ class PhpWarningJob extends PpqJob
      */
     public function invoke(): void
     {
-        unserialize('foo');
+        $content = file_get_contents(__DIR__ . '/file-that-does-not-exist');
     }
 }

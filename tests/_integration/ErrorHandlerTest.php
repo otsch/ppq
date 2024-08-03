@@ -68,13 +68,10 @@ it('handles a PHP warning', function () {
 
     $handlerEvents = file_get_contents(helper_testDataPath('error-handler-events'));
 
-    helper_dump($handlerEvents);
-
-    helper_dump(Logs::getJobLog($job)); // @phpstan-ignore-line
-
     expect($job?->status)->toBe(QueueJobStatus::finished)
-        ->and($handlerEvents)->toContain('PHP Warning: unserialize(): Error at offset 0 of 3 bytes');
-})->only();
+        ->and($handlerEvents)->toContain('PHP Warning: file_get_contents(')
+        ->and($handlerEvents)->toContain('Failed to open stream: No such file or directory');
+});
 
 it('handles a PHP error', function () {
     $job = Dispatcher::queue('default')
