@@ -55,6 +55,8 @@ it('handles an uncaught exception', function () {
 });
 
 it('handles a PHP warning', function () {
+    error_reporting(E_ALL);
+
     $job = Dispatcher::queue('default')
         ->job(PhpWarningJob::class)
         ->dispatch();
@@ -68,6 +70,8 @@ it('handles a PHP warning', function () {
     $handlerEvents = file_get_contents(helper_testDataPath('error-handler-events'));
 
     helper_dump(file_exists(helper_testDataPath('error-handler-events')));
+    helper_dump(error_reporting());
+    helper_dump($handlerEvents);
 
     expect($job?->status)->toBe(QueueJobStatus::finished)
         ->and($handlerEvents)->toContain('PHP Warning: unserialize(): Error at offset 0 of 3 bytes');
