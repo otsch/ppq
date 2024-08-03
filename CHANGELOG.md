@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2024-08-03
+### Added
+* Error handling functionality. You can now add a `error_handler` in your config, like this: `['error_handler' => ['class' => MyErrorHandler::class, 'active' => true]`. The class needs to extend the new abstract class `Otsch\Ppq\AbstractErrorHandler`. In its `boot()` method you can register one or multiple error handlers via its own `registerHandler()` method. The handlers are automatically called with any uncaught exception or PHP warnings and errors (turned into `ErrorException`s) occuring during a PPQ job execution.
+
 ## [0.1.2] - 2022-07-13
 ### Fixed
 * Fix identifying Sub-Processes that need to be killed, when cancelling a running Process.

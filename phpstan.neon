@@ -3,5 +3,7 @@ parameters:
     paths:
         - src
         - tests
+    excludePaths:
+        - tests/Stubs/PhpParseErrorJob.php
     ignoreErrors:
         - "#^Call to an undefined method Pest\\\\Expectation\\|Pest\\\\Support\\\\Extendable\\:\\:\\S+\\(\\)\\.$#"

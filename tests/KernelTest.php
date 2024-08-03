@@ -83,13 +83,19 @@ it('throws an Exception when there is no job ID in the argv arguments', function
 it('fails when the job ID to run is not on the queue', function () {
     $failMock = Mockery::mock(Fail::class);
 
-    $failMock->shouldReceive('withMessage')->twice(); // @phpstan-ignore-line
+    $failMock->shouldReceive('withMessage')->once(); // @phpstan-ignore-line
 
     $queueJob = new QueueRecord('default', TestJob::class);
 
     $kernel = new Kernel(['vendor/bin/ppq', 'run', $queueJob->id], fail: $failMock); // @phpstan-ignore-line
 
-    $kernel->run();
+    try {
+        $kernel->run();
+    } catch (Exception $exception) {
+        expect($exception->getMessage())->toBe(
+            'This exception should only be possible in the unit tests when mocking $this->fail',
+        );
+    }
 });
 
 it('fails when the job class to run does not implement the QueueableJob interface', function () {

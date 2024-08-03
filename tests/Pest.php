@@ -130,4 +130,27 @@ function helper_containsInOneLine(string $string, array $contains): bool
     }
 
     return false;
-};
+}
+
+function helper_emptyHandlerEventsFile(): void
+{
+    $handlerEventsFile = helper_testDataPath('error-handler-events');
+
+    if (!file_exists($handlerEventsFile)) {
+        touch($handlerEventsFile);
+    } else {
+        file_put_contents($handlerEventsFile, '');
+    }
+}
+
+function helper_dump(mixed $var): void
+{
+    error_log(var_export($var, true));
+}
+
+function helper_dieDump(mixed $var): void
+{
+    error_log(var_export($var, true));
+
+    exit;
+}

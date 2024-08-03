@@ -106,6 +106,19 @@ return [
          */
         'active' => false,
     ],
+
+    /**
+     * Provide your own error handler, that will be called with all
+     * uncaught exceptions and PHP errors (and optionally warnings).
+     */
+    'error_handler' => [
+        'class' => MyErrorHandler::class,
+
+        /**
+         * Same as in the scheduler setting above.
+         */
+        'active' => true,
+    ],
 ];
 ```
 
@@ -389,4 +402,42 @@ So, if the `php vendor/bin/ppq check-schedule` command is run exactly at 15 minu
 
 ```
 * * * * * php /path/to/your/project/vendor/bin/ppq check-schedule
+```
+
+### Error Handling
+
+To catch and handle errors (Exceptions and PHP errors/warnings) happening in your PPQ background jobs, you can define an `error_handler` in your config (see example config at the top). Your error handler class must extend the abstract `Otsch\Ppq\AbstractErrorHandler` class and in the `boot()` method you can register your handler.
+
+```php
+use Otsch\Ppq\AbstractErrorHandler;
+
+class MyErrorHandler extends AbstractErrorHandler
+{
+    public function boot(): void
+    {
+        $this->registerHandler(
+            function (Throwable $exception) {
+                if ($exception instanceof ErrorException) {
+                    // This is a PHP error. You can get the error level via:
+
+                    if ($exception->getSeverity() === E_ERROR) {
+                        // Handle PHP error.
+                    } elseif ($exception->getSeverity() === E_WARNING) {
+                        // Handle PHP warning.
+                        // If you don't want this error handler to be called
+                        // with PHP warnings at all, you can provide bool false
+                        // as the second argument in the registerHandler() call
+                        // (see further below).
+                    } else {
+                        // Handle other PHP error (E_PARSE or others).
+                    }
+                } else {
+                    // Handle an uncaught exception thrown somewhere
+                    // in your application code.
+                }
+            },
+            // true, // If you want to completely ignore PHP warnings (as mentioned above).
+        );
+    }
+}
 ```
