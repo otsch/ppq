@@ -119,6 +119,13 @@ return [
          */
         'active' => true,
     ],
+    
+    /**
+     * Optional. If you cannot reliably control the error_reporting() level for the sub-process
+     * in which the background job is executed, define a level here. It will be passed
+     * as a parameter when starting the process.
+     */
+    'error_reporting' => 'E_ALL',
 ];
 ```
 

@@ -37,6 +37,16 @@ it('starts a waiting job', function () {
 
     expect($job->pid)->toBeInt()->toBeGreaterThan(0);
 
+    $processes = $queue->getProcesses();
+
+    $latestProcess = end($processes);
+
+    if (!$latestProcess) {
+        throw new Exception('No latest process in queue');
+    }
+
+    expect($latestProcess->process->getCommandLine())->toContain('-d error_reporting=E_ALL');
+
     $pid = $job->pid;
 
     /** @var int $pid */

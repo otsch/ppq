@@ -22,4 +22,6 @@ return [
             'concurrent_jobs' => 0,
         ],
     ],
+
+    'error_reporting' => 'E_ALL',
 ];

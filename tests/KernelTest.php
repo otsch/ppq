@@ -38,6 +38,16 @@ it('appends the set config path as --c option to the ppq command', function () {
     expect($process->getCommandLine())->toEndWith('--config=' . Config::getPath());
 });
 
+it(
+    'adds the -d option with the provided ini setting, when the $iniConfigOption parameter of the ppqCommand() ' .
+    'method is used',
+    function () {
+        $process = Kernel::ppqCommand('run 123', iniConfigOption: 'error_reporting=E_ALL');
+
+        expect($process->getCommandLine())->toStartWith('php -d error_reporting=E_ALL ');
+    }
+);
+
 it('calls the bootstrap file defined in the config when run() is called', function () {
     $kernel = new Kernel([]);
 
