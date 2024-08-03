@@ -4,6 +4,7 @@ use PhpCsFixer\Config;
 use PhpCsFixer\Finder;
 
 $finder = Finder::create()
+    ->notPath(['tests/Stubs/PhpParseErrorJob.php'])
     ->exclude(['.github', 'bin', 'git-hooks'])
     ->in(__DIR__);
 $config = new Config();

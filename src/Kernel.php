@@ -31,13 +31,18 @@ class Kernel
         $this->logger = new EchoLogger();
     }
 
-    public static function ppqCommand(string $command, ?string $logPath = null): SymfonyProcess
-    {
+    public static function ppqCommand(
+        string $command,
+        ?string $logPath = null,
+        ?string $iniConfigOption = null,
+    ): SymfonyProcess {
         if ($logPath) {
             touch($logPath);
         }
 
-        $command = 'php ' . self::ppqPath() . ' ' . $command . ' --config=' . Config::getPath();
+        $iniConfigOption = $iniConfigOption ? '-d ' . $iniConfigOption . ' ' : '';
+
+        $command = 'php ' . $iniConfigOption . self::ppqPath() . ' ' . $command . ' --config=' . Config::getPath();
 
         if ($logPath) {
             $command .= ' >> ' . $logPath . ' 2>&1';
@@ -110,7 +115,7 @@ class Kernel
     {
         $job = $this->getJobByIdOrFail();
 
-        /** @var QueueRecord $job */
+        $errorHandler = $this->getErrorHandler();
 
         try {
             $job = new $job->jobClass(...$job->args);
@@ -123,15 +128,21 @@ class Kernel
 
             $job->invoke();
         } catch (Exception $exception) {
-            $this->fail->withMessage($exception->getMessage());
+            $errorHandler?->handleException($exception);
+
+            $this->fail->withMessage(
+                'Uncaught ' . get_class($exception) . ': ' . $exception->getMessage() . PHP_EOL . ' in ' .
+                $exception->getFile() . ' on line ' . $exception->getLine()
+            );
         }
     }
 
+    /**
+     * @throws Exception
+     */
     protected function cancelJob(): void
     {
         $job = $this->getJobByIdOrFail();
-
-        /** @var QueueRecord $job */
 
         Ppq::cancel($job->id);
     }
@@ -202,12 +213,13 @@ class Kernel
         $this->logger->info('Flushed all queues');
     }
 
+    /**
+     * @throws Exception
+     */
     protected function showLog(): void
     {
         if ($this->argv->jobId()) {
             $job = $this->getJobByIdOrFail();
-
-            /** @var QueueRecord $job */
 
             $numberOfLines = $this->argv->lines();
 
@@ -223,7 +235,34 @@ class Kernel
         }
     }
 
-    protected function getJobByIdOrFail(): ?QueueRecord
+    /**
+     * @throws Exception
+     */
+    protected function getErrorHandler(): ?AbstractErrorHandler
+    {
+        $mainErrorHandler = Config::get('error_handler');
+
+        if (
+            isset($mainErrorHandler['class']) &&
+            isset($mainErrorHandler['active']) &&
+            $mainErrorHandler['active'] === true
+        ) {
+            $handler = new $mainErrorHandler['class']();
+
+            if (!$handler instanceof AbstractErrorHandler) {
+                throw new Exception('Configured error_handler class doesn\'t extend the AbstractErrorHandler class.');
+            }
+
+            return $handler;
+        }
+
+        return null;
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function getJobByIdOrFail(): QueueRecord
     {
         if (!$this->argv->jobId()) {
             throw new Exception('No or invalid job id.');
@@ -233,6 +272,8 @@ class Kernel
 
         if ($job === null) {
             $this->fail->withMessage('Job with id ' . $this->argv->jobId() . ' not found');
+
+            throw new Exception('This exception should only be possible in the unit tests when mocking $this->fail');
         }
 
         return $job;

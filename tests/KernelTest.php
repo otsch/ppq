@@ -38,6 +38,16 @@ it('appends the set config path as --c option to the ppq command', function () {
     expect($process->getCommandLine())->toEndWith('--config=' . Config::getPath());
 });
 
+it(
+    'adds the -d option with the provided ini setting, when the $iniConfigOption parameter of the ppqCommand() ' .
+    'method is used',
+    function () {
+        $process = Kernel::ppqCommand('run 123', iniConfigOption: 'error_reporting=E_ALL');
+
+        expect($process->getCommandLine())->toStartWith('php -d error_reporting=E_ALL ');
+    }
+);
+
 it('calls the bootstrap file defined in the config when run() is called', function () {
     $kernel = new Kernel([]);
 
@@ -83,13 +93,19 @@ it('throws an Exception when there is no job ID in the argv arguments', function
 it('fails when the job ID to run is not on the queue', function () {
     $failMock = Mockery::mock(Fail::class);
 
-    $failMock->shouldReceive('withMessage')->twice(); // @phpstan-ignore-line
+    $failMock->shouldReceive('withMessage')->once(); // @phpstan-ignore-line
 
     $queueJob = new QueueRecord('default', TestJob::class);
 
     $kernel = new Kernel(['vendor/bin/ppq', 'run', $queueJob->id], fail: $failMock); // @phpstan-ignore-line
 
-    $kernel->run();
+    try {
+        $kernel->run();
+    } catch (Exception $exception) {
+        expect($exception->getMessage())->toBe(
+            'This exception should only be possible in the unit tests when mocking $this->fail',
+        );
+    }
 });
 
 it('fails when the job class to run does not implement the QueueableJob interface', function () {
