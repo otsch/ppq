@@ -50,7 +50,11 @@ class Queue
      */
     public function startWaitingJob(QueueRecord $waitingJob): void
     {
-        $process = Kernel::ppqCommand('run ' . $waitingJob->id, Logs::queueJobLogPath($waitingJob));
+        $process = Kernel::ppqCommand(
+            'run ' . $waitingJob->id,
+            Logs::queueJobLogPath($waitingJob),
+            Config::get('error_reporting') ? 'error_reporting=' . Config::get('error_reporting') : '',
+        );
 
         $process->start();
 

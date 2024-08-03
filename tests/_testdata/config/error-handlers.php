@@ -11,6 +11,8 @@ return [
         ],
     ],
 
+    'error_reporting' => 'E_ALL',
+
     'error_handler' => [
         'class' => ErrorHandler::class,
         'active' => true,

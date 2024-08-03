@@ -31,13 +31,18 @@ class Kernel
         $this->logger = new EchoLogger();
     }
 
-    public static function ppqCommand(string $command, ?string $logPath = null): SymfonyProcess
-    {
+    public static function ppqCommand(
+        string $command,
+        ?string $logPath = null,
+        ?string $iniConfigOption = null,
+    ): SymfonyProcess {
         if ($logPath) {
             touch($logPath);
         }
 
-        $command = 'php ' . self::ppqPath() . ' ' . $command . ' --config=' . Config::getPath();
+        $iniConfigOption = $iniConfigOption ? '-d ' . $iniConfigOption . ' ' : '';
+
+        $command = 'php ' . $iniConfigOption . self::ppqPath() . ' ' . $command . ' --config=' . Config::getPath();
 
         if ($logPath) {
             $command .= ' >> ' . $logPath . ' 2>&1';
